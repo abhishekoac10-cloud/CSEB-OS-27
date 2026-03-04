@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>CSEB OS 27 | Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;outline:none;margin:0;padding:0}
+        html{font-size:16px;overflow-x:hidden;scrollbar-gutter:stable;height:100%}
+        body{font-family:"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background-color:#000;color:#FFF;transition:background .4s,color .4s;min-width:1200px;overflow-x:hidden;overflow-y:auto;min-height:100%}
+        body.login-locked{overflow-y:hidden;height:100vh}
+        ::-webkit-scrollbar{width:4px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.28)}
+        :root{
+            --neon-blue:#2997FF;--neon-green:#30D158;--neon-purple:#BF5AF2;
+            --neon-gold:#FFD60A;--neon-orange:#FF640A;
+            --bg:#000;--bg-card:rgba(20,20,25,.7);--bg-card-hover:rgba(30,30,35,.95);
+            --glass-bg:rgba(20,20,25,.7);--glass-border:rgba(255,255,255,.08);
+            --glass-blur:blur(20px);--glass-shine:linear-gradient(135deg,rgba(255,255,255,.05) 0%,transparent 100%);
+            --card-hover-border:rgba(255,255,255,.18);--shadow-deep:0 20px 50px rgba(0,0,0,.6);
+            --orb-opacity:.3;--orb-speed:20s;
+            --dd-bg:rgba(12,12,16,.97);--dd-border:rgba(255,255,255,.08);
+            --dd-item-hover:rgba(255,255,255,.055)
+        }
+        body.amoled{
+            --bg:#000;--bg-card:rgba(5,5,6,.99);--bg-card-hover:rgba(10,10,12,.99);
+            --glass-bg:rgba(5,5,6,.98);--glass-border:rgba(255,255,255,.04);
+            --neon-blue:#0a84ff;--neon-green:#28c840;--neon-purple:#a855f7;
+            --neon-gold:#f59e0b;--orb-opacity:.06;--orb-speed:50s;
+            --dd-bg:rgba(3,3,4,.99);--dd-border:rgba(255,255,255,.04)
+        }
+        body.amoled .ambient-bg{background:none!important}
+        body.amoled .orb{opacity:.03!important}
+        body.amoled .timer-card,.body.amoled .neural-card{background:#000!important;border-color:rgba(10,132,255,.08)!important}
+        body.amoled .schedule-section,.body.amoled .phase-timeline-section,.body.amoled .whats-new-section,.body.amoled .studyplan-section,.body.amoled .app-card{background:rgba(5,5,6,.99)!important;border-color:rgba(255,255,255,.03)!important}
+
+        *{-webkit-user-select:none;-moz-user-select:none;user-select:none;cursor:default}
+        input,label,.ex-name,.ex-cat,.date-cell,.h-date,.h-id,.h-time,.toast-message,.wn-card-title,.wn-card-desc,.neural-insight-text,.sp-topic-name{-webkit-user-select:text;-moz-user-select:text;user-select:text;cursor:text!important}
+        button,a,.app-card,.profile-btn,.menu-item,tbody tr,.notif-bell-btn,.notif-item,.notif-clear-btn,.notif-mark-read-btn,.sp-day-card{cursor:pointer!important}
+
+        /* TOASTS */
+        .toast-container{position:fixed;top:30px;right:30px;z-index:9999999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+        .toast{background:rgba(18,18,22,.97);backdrop-filter:blur(16px) saturate(160%);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:16px 22px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 30px rgba(0,0,0,.5);opacity:0;transform:translateX(380px) scale(.96);transition:all .35s cubic-bezier(.175,.885,.32,1.275);pointer-events:all;min-width:310px;max-width:390px}
+        .toast.show{opacity:1;transform:translateX(0) scale(1)}
+        .toast.error{border-left:3px solid #FF453A}
+        .toast.success{border-left:3px solid #30D158}
+        .toast.info{border-left:3px solid #2997FF}
+        .toast.warning{border-left:3px solid #FFD60A}
+        .toast-icon{font-size:1.3rem;flex-shrink:0}
+        .toast-message{flex:1;font-size:.92rem;color:rgba(255,255,255,.92);line-height:1.4;font-family:"Inter",sans-serif}
+
+        /* AMBIENT */
+        .ambient-bg{position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:radial-gradient(circle at 15% 15%,rgba(217,119,6,.08),transparent 45%),radial-gradient(circle at 85% 85%,rgba(180,83,9,.06),transparent 45%);pointer-events:none;overflow:hidden;transition:opacity .8s}
+        .orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:var(--orb-opacity);will-change:transform}
+        .orb-1{width:700px;height:700px;background:#d97706;top:-20%;left:-10%;animation:float var(--orb-speed) infinite alternate cubic-bezier(.4,0,.2,1)}
+        .orb-2{width:600px;height:600px;background:#b45309;bottom:-15%;right:-10%;animation:float 25s infinite alternate-reverse cubic-bezier(.4,0,.2,1)}
+        @keyframes float{0%{transform:translate3d(0,0,0) rotate(0deg)}100%{transform:translate3d(60px,40px,0) rotate(8deg)}}
+
+        /* CLOCK */
+        .live-clock{position:absolute;top:40px;left:60px;display:flex;align-items:center;gap:10px;background:rgba(22,22,28,.6);border:1px solid rgba(255,255,255,.09);padding:10px 22px;border-radius:50px;backdrop-filter:blur(16px) saturate(160%);z-index:1000;font-family:"Inter",sans-serif;transition:.3s}
+        .live-clock:hover{background:rgba(40,40,48,.75);border-color:rgba(255,255,255,.22);box-shadow:0 6px 20px rgba(0,0,0,.3);transform:translateY(-2px)}
+        .clock-text{font-size:.95rem;font-weight:600;color:rgba(255,255,255,.88);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.5px;font-family:"Inter",monospace}
+        .clock-tz{font-size:.72rem;color:rgba(255,255,255,.32);font-family:"Inter",sans-serif;font-weight:500;margin-left:2px}
+
+        /* LOGIN */
+        #welcome-overlay{position:fixed;top:0;left:0;width:100%;height:100%;z-index:999991;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;padding-top:7%;background:rgba(0,0,0,1);backdrop-filter:blur(24px);transition:opacity .8s ease,visibility .8s ease}
+        #welcome-overlay::after{content:"";position:absolute;bottom:0;width:100%;height:40%;background:linear-gradient(to top,rgba(41,151,255,.06),transparent);pointer-events:none;opacity:0;transition:opacity 2s ease}
+        #welcome-overlay.loading-state::after{opacity:1}
+        .login-card{width:440px;padding:60px 45px;background:rgba(20,20,24,.7);backdrop-filter:blur(30px);border:1px solid rgba(255,255,255,.1);border-top:1px solid rgba(255,255,255,.15);border-radius:36px;box-shadow:0 30px 70px -20px rgba(0,0,0,.8);text-align:center;transition:filter .6s ease,transform .6s ease,opacity .6s ease;z-index:999992}
+        .login-title{font-size:2.2rem;font-weight:800;letter-spacing:-.5px;margin-bottom:30px;background:linear-gradient(135deg,#fff 30%,#a5b4fc 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .input-wrapper{margin-bottom:20px}
+        .input-field{width:100%;padding:18px 20px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.08);border-radius:16px;color:white;font-size:1.1rem;transition:.25s;font-family:"Inter",sans-serif}
+        .input-field.error{border-color:rgba(255,69,58,.6);box-shadow:0 0 15px rgba(255,69,58,.12)}
+        .input-field::placeholder{color:rgba(255,255,255,.3)}
+        .input-field:focus{border-color:rgba(41,151,255,.6);box-shadow:0 0 20px rgba(41,151,255,.12);background:rgba(0,0,0,.8);transform:scale(1.02)}
+        .login-btn{width:100%;padding:18px;margin-top:10px;background:linear-gradient(135deg,#2997FF,#0077EE);color:white;font-size:1.1rem;font-weight:700;border:none;border-radius:16px;cursor:pointer;transition:.2s;box-shadow:0 8px 24px rgba(41,151,255,.22);position:relative;overflow:hidden;font-family:inherit}
+        .login-btn::before{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);transition:left .45s}
+        .login-btn:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(41,151,255,.35)}
+        .login-btn:hover::before{left:100%}
+        .login-btn:disabled{opacity:.6;cursor:not-allowed!important;transform:none}
+
+        .greeting-container{position:fixed;top:12%;left:50%;transform:translate(-50%,0);width:100%;display:flex;justify-content:center;align-items:center;z-index:1000000;pointer-events:none}
+        .greeting-text{font-size:5rem;font-weight:800;letter-spacing:-2px;text-align:center;background:linear-gradient(to right,#2997FF,#BF5AF2,#FFD60A,#30D158,#2997FF);background-size:300% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:gemini-flow 4s linear infinite;opacity:0;filter:blur(20px);transform:scale(.9) translateY(40px);transition:opacity 1s ease,filter 1s ease,transform 1s cubic-bezier(.22,1,.36,1)}
+        .greeting-text.enter{opacity:1;filter:blur(0px);transform:scale(1) translateY(0)}
+        .greeting-text.exit{opacity:0;filter:blur(12px);transform:scale(1.3);transition:opacity .7s ease-in,filter .7s ease-in,transform .7s ease-in}
+        @keyframes gemini-flow{0%{background-position:0% center}100%{background-position:-200% center}}
+
+        /* MAIN APP */
+        #main-app{display:none;opacity:0;max-width:1280px;margin:0 auto;padding:140px 60px 80px 60px;transition:opacity .8s ease,transform .8s cubic-bezier(.19,1,.22,1);transform:translateY(30px);position:relative;z-index:10;isolation:isolate}
+        .section-reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s cubic-bezier(.22,1,.36,1)}
+        .section-reveal.revealed{opacity:1;transform:translateY(0)}
+
+        /* PROFILE */
+        .user-profile-widget{position:absolute;top:40px;right:60px;z-index:1000;display:flex;align-items:center;gap:10px}
+        .profile-btn{display:flex;align-items:center;gap:12px;background:rgba(22,22,28,.6);border:1px solid rgba(255,255,255,.09);padding:8px 18px 8px 8px;border-radius:50px;cursor:pointer;backdrop-filter:blur(16px) saturate(160%);transition:.25s;will-change:transform}
+        .profile-btn:hover{background:rgba(40,40,50,.75);border-color:rgba(255,255,255,.2);box-shadow:0 6px 20px rgba(0,0,0,.35);transform:translateY(-2px)}
+        .profile-btn.active{background:rgba(40,40,50,.85);border-color:rgba(255,255,255,.18)}
+        .avatar{width:40px;height:40px;background:linear-gradient(135deg,#0A84FF,#5E5CE6);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem;box-shadow:0 0 12px rgba(10,132,255,.3);border:1.5px solid rgba(255,255,255,.12);flex-shrink:0;transition:box-shadow .25s}
+        .profile-btn:hover .avatar{box-shadow:0 0 18px rgba(10,132,255,.5)}
+        .user-name{font-weight:600;font-size:.98rem;color:rgba(255,255,255,.9);letter-spacing:.1px}
+        .user-chevron{font-size:.75rem;color:rgba(255,255,255,.4);transition:transform .28s cubic-bezier(.34,1.56,.64,1)}
+        .profile-btn.active .user-chevron{transform:rotate(180deg)}
+
+        /* NOTIFICATION BELL */
+        .notif-bell-btn{position:relative;width:48px;height:48px;background:rgba(22,22,28,.6);border:1px solid rgba(255,255,255,.09);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(16px) saturate(160%);transition:.25s;flex-shrink:0;will-change:transform}
+        .notif-bell-btn:hover{background:rgba(40,40,50,.75);border-color:rgba(255,255,255,.2);box-shadow:0 6px 20px rgba(0,0,0,.35);transform:translateY(-2px)}
+        .notif-bell-btn.active{background:rgba(40,40,50,.85);border-color:rgba(255,255,255,.18)}
+        .notif-bell-icon{font-size:1.15rem;line-height:1}
+        .notif-bell-btn.has-unread .notif-bell-icon{animation:bellShake .5s cubic-bezier(.36,.07,.19,.97) 1}
+        @keyframes bellShake{0%,100%{transform:rotate(0)}20%{transform:rotate(-12deg)}40%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(8deg)}}
+        .notif-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 4px;background:#FF453A;border-radius:9px;font-size:.65rem;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid #000;transform:scale(0);transition:transform .3s cubic-bezier(.34,1.56,.64,1);font-family:"Inter",sans-serif;pointer-events:none}
+        .notif-badge.visible{transform:scale(1)}
+        .notif-panel{position:absolute;top:calc(100% + 10px);right:-10px;width:380px;background:rgba(10,10,14,.97);backdrop-filter:blur(40px) saturate(180%);border:1px solid rgba(255,255,255,.08);border-radius:24px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.3),0 16px 40px rgba(0,0,0,.55);opacity:0;visibility:hidden;transform:translateY(-8px) scale(.97);transition:opacity .2s cubic-bezier(.16,1,.3,1),transform .2s cubic-bezier(.16,1,.3,1),visibility .2s;transform-origin:top right;max-height:500px;display:flex;flex-direction:column;will-change:transform,opacity;isolation:isolate}
+        .notif-panel.show{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+        .notif-panel-header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0}
+        .notif-panel-title{font-size:.88rem;font-weight:700;color:rgba(255,255,255,.9);display:flex;align-items:center;gap:8px}
+        .notif-panel-title-count{font-size:.62rem;font-weight:800;padding:2px 7px;border-radius:6px;background:rgba(255,69,58,.12);border:1px solid rgba(255,69,58,.25);color:#FF453A}
+        .notif-panel-actions{display:flex;gap:8px;align-items:center}
+        .notif-mark-all-btn,.notif-clear-btn{font-size:.65rem;font-weight:700;color:rgba(255,255,255,.35);background:none;border:none;cursor:pointer!important;padding:4px 8px;border-radius:6px;transition:.15s;font-family:"Inter",sans-serif}
+        .notif-mark-all-btn:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7)}
+        .notif-clear-btn:hover{background:rgba(255,69,58,.1);color:rgba(255,69,58,.8)}
+        .notif-list{overflow-y:auto;flex:1;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.1) transparent}
+        .notif-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;gap:10px;opacity:.4}
+        .notif-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer!important;transition:background .15s;position:relative}
+        .notif-item:last-child{border-bottom:none}
+        .notif-item:hover{background:rgba(255,255,255,.04)}
+        .notif-item.unread{background:rgba(255,255,255,.025)}
+        .notif-item.unread::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:60%;background:var(--notif-accent,#2997FF);border-radius:0 2px 2px 0}
+        .notif-item[data-type="warning"]{--notif-accent:#FFD60A}
+        .notif-item[data-type="alert"]{--notif-accent:#FF453A}
+        .notif-item[data-type="success"]{--notif-accent:#30D158}
+        .notif-item[data-type="info"]{--notif-accent:#2997FF}
+        .notif-icon-wrap{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1rem;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06)}
+        .notif-item[data-type="warning"] .notif-icon-wrap{background:rgba(255,214,10,.08);border-color:rgba(255,214,10,.15)}
+        .notif-item[data-type="alert"] .notif-icon-wrap{background:rgba(255,69,58,.08);border-color:rgba(255,69,58,.15)}
+        .notif-item[data-type="success"] .notif-icon-wrap{background:rgba(48,209,88,.08);border-color:rgba(48,209,88,.15)}
+        .notif-item[data-type="info"] .notif-icon-wrap{background:rgba(41,151,255,.08);border-color:rgba(41,151,255,.15)}
+        .notif-body{flex:1;min-width:0}
+        .notif-title{font-size:.82rem;font-weight:700;color:rgba(255,255,255,.88);line-height:1.3;margin-bottom:3px}
+        .notif-desc{font-size:.75rem;color:rgba(255,255,255,.42);line-height:1.4;font-family:"Inter",sans-serif}
+        .notif-time{font-size:.65rem;color:rgba(255,255,255,.22);font-family:"Inter",monospace;margin-top:5px}
+        .notif-mark-read-btn{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:5px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);font-size:.6rem;cursor:pointer!important;display:flex;align-items:center;justify-content:center;opacity:0;transition:.15s;color:rgba(255,255,255,.4)}
+        .notif-item:hover .notif-mark-read-btn{opacity:1}
+        .notif-item.unread .notif-mark-read-btn:hover{background:rgba(48,209,88,.15);border-color:rgba(48,209,88,.3);color:#30D158}
+        .notif-panel-footer{padding:10px 16px;border-top:1px solid rgba(255,255,255,.05);font-size:.62rem;color:rgba(255,255,255,.18);font-family:"Inter",monospace;text-align:center;flex-shrink:0}
+
+        /* PROFILE DROPDOWN */
+        .profile-dropdown{position:absolute;top:calc(100% + 10px);right:0;width:360px;background:var(--dd-bg);backdrop-filter:blur(40px) saturate(200%);border:1px solid var(--dd-border);border-radius:24px;padding:5px;box-shadow:0 4px 12px rgba(0,0,0,.3),0 20px 50px rgba(0,0,0,.6);opacity:0;visibility:hidden;transform:translateY(-10px) scale(.97);transition:opacity .2s cubic-bezier(.16,1,.3,1),transform .2s cubic-bezier(.16,1,.3,1),visibility .2s;transform-origin:top right;max-height:calc(100vh - 100px);overflow-y:auto;overflow-x:hidden;will-change:transform,opacity}
+        .profile-dropdown.show{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+        .dd-divider{height:1px;background:rgba(255,255,255,.05);margin:4px 6px}
+        .dd-section-label{font-size:.56rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.2);padding:7px 14px 3px;font-family:"Inter",sans-serif}
+        .menu-item{display:flex;align-items:center;gap:11px;padding:9px 12px;color:rgba(255,255,255,.62);font-size:.85rem;font-weight:500;text-decoration:none;border-radius:11px;transition:.15s;cursor:pointer;position:relative;margin:1px 2px}
+        .menu-item:hover{background:var(--dd-item-hover);color:rgba(255,255,255,.95);transform:translateX(3px)}
+        .menu-item-icon{font-size:.9rem;width:28px;height:28px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+        .menu-item:hover .menu-item-icon{background:rgba(41,151,255,.1);border-color:rgba(41,151,255,.22)}
+        .menu-item-arrow{margin-left:auto;font-size:.7rem;color:rgba(255,255,255,.18);transition:.15s}
+        .menu-item.logout{color:rgba(255,69,58,.7);margin-top:2px}
+        .menu-item.logout:hover{background:rgba(255,69,58,.08);color:#FF453A}
+        .menu-item.logout .menu-item-icon{background:rgba(255,69,58,.05);border-color:rgba(255,69,58,.12)}
+        .menu-item.logout:hover .menu-item-icon{background:rgba(255,69,58,.12);border-color:rgba(255,69,58,.28)}
+        .dd-expand-section{border-radius:11px;overflow:hidden;margin:1px 2px}
+        .dd-expand-toggle{display:flex;align-items:center;gap:11px;padding:9px 12px;color:rgba(255,255,255,.62);font-size:.85rem;font-weight:500;border-radius:11px;cursor:pointer;transition:.15s}
+        .dd-expand-toggle:hover{background:var(--dd-item-hover);color:rgba(255,255,255,.9)}
+        .dd-expand-toggle.open{background:rgba(255,255,255,.04);color:rgba(255,255,255,.9);border-radius:12px 12px 0 0}
+        .dd-expand-icon{font-size:.9rem;width:28px;height:28px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s}
+        .dd-expand-toggle.open .dd-expand-icon{background:rgba(41,151,255,.09);border-color:rgba(41,151,255,.18)}
+        .dd-expand-label{flex:1}
+        .dd-expand-chevron{font-size:.6rem;color:rgba(255,255,255,.2);transition:transform .25s cubic-bezier(.34,1.56,.64,1),color .15s;margin-left:4px}
+        .dd-expand-toggle.open .dd-expand-chevron{transform:rotate(180deg);color:rgba(255,255,255,.45)}
+        .dd-expand-panel{max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.22,1,.36,1),opacity .22s ease;opacity:0;background:rgba(255,255,255,.015);border-radius:0 0 12px 12px;border-top:1px solid rgba(255,255,255,.04)}
+        .dd-expand-panel.open{max-height:700px;opacity:1;overflow-y:auto}
+        .dd-badge{font-size:.62rem;font-weight:800;padding:2px 8px;border-radius:6px;letter-spacing:.3px;flex-shrink:0}
+        .dd-badge-green{background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.18);color:var(--neon-green)}
+        .dd-badge-blue{background:rgba(41,151,255,.1);border:1px solid rgba(41,151,255,.18);color:var(--neon-blue)}
+        .dd-badge-purple{background:rgba(191,90,242,.1);border:1px solid rgba(191,90,242,.18);color:var(--neon-purple)}
+        .dd-badge-gold{background:rgba(255,214,10,.1);border:1px solid rgba(255,214,10,.18);color:var(--neon-gold)}
+        .status-row{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;gap:8px}
+        .status-row-label{font-size:.78rem;color:rgba(255,255,255,.38);font-family:"Inter",sans-serif;letter-spacing:.2px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+        .status-row-val{font-size:.8rem;font-weight:700;color:rgba(255,255,255,.75);font-family:"Inter",sans-serif;text-align:right}
+        .status-row-val.green{color:var(--neon-green)}.status-row-val.blue{color:var(--neon-blue)}.status-row-val.gold{color:var(--neon-gold)}.status-row-val.orange{color:var(--neon-orange)}.status-row-val.red{color:#FF453A}
+        .status-dot-inline{display:inline-block;width:6px;height:6px;background:var(--neon-green);border-radius:50%;box-shadow:0 0 5px var(--neon-green);animation:pulse 2s infinite;flex-shrink:0}
+        .history-list{padding:8px 10px 10px}
+        .history-item{background:rgba(255,255,255,.025);border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:.82rem;border:1px solid rgba(255,255,255,.04);transition:background .15s}
+        .history-item:hover{background:rgba(255,255,255,.05)}
+        .h-date{color:rgba(255,255,255,.88);font-weight:600;display:flex;justify-content:space-between;margin-bottom:4px;font-size:.82rem}
+        .h-id{font-family:"Inter",monospace;color:var(--neon-blue);font-size:.7rem;font-weight:600}
+        .h-time{color:rgba(255,255,255,.4);font-size:.75rem;font-family:"Inter",sans-serif}
+        .activity-empty{text-align:center;padding:20px 0;opacity:.35;font-size:.82rem;font-family:"Inter",sans-serif}
+        .exp-drop-row{display:flex;align-items:flex-start;justify-content:space-between;padding:10px 14px;border-radius:10px;cursor:pointer!important;transition:background .15s;gap:12px}
+        .exp-drop-row:hover{background:rgba(255,255,255,.035)}
+        .exp-drop-row-left{display:flex;align-items:flex-start;gap:10px;flex:1;min-width:0}
+        .exp-drop-emoji{font-size:.95rem;flex-shrink:0;margin-top:2px}
+        .exp-drop-name-block{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0}
+        .exp-drop-name{font-size:.85rem;font-weight:600;color:rgba(255,255,255,.72);line-height:1.4}
+        .exp-always-on{font-size:.58rem;color:rgba(48,209,88,.65);font-weight:700;letter-spacing:.5px;text-transform:uppercase;font-family:"Inter",sans-serif}
+        .exp-drop-toggle{width:36px;height:20px;background:rgba(255,255,255,.08);border-radius:10px;position:relative;flex-shrink:0;cursor:pointer!important;border:1px solid rgba(255,255,255,.07);transition:background .28s cubic-bezier(.34,1.56,.64,1);margin-top:3px}
+        .exp-drop-toggle.on{background:rgba(191,90,242,.4);border-color:rgba(191,90,242,.3);box-shadow:0 0 6px rgba(191,90,242,.15)}
+        .exp-drop-toggle-knob{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .28s cubic-bezier(.34,1.56,.64,1);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+        .exp-drop-toggle.on .exp-drop-toggle-knob{transform:translateX(16px)}
+        .exp-drop-toggle.locked-on{background:rgba(48,209,88,.2);border-color:rgba(48,209,88,.35);cursor:not-allowed!important;pointer-events:none}
+        .exp-drop-toggle.locked-on .exp-drop-toggle-knob{transform:translateX(16px)}
+        .dd-footer{padding:8px 12px 7px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:3px}
+        .dd-footer-build{display:flex;align-items:center;gap:6px;font-size:.6rem;color:rgba(255,255,255,.16);font-family:"Inter",monospace;letter-spacing:.3px}
+        .dd-footer-dot{width:3px;height:3px;background:var(--neon-green);border-radius:50%;box-shadow:0 0 4px var(--neon-green)}
+        .dd-footer-version{font-size:.58rem;color:rgba(255,255,255,.1);font-family:"Inter",monospace;letter-spacing:.3px;margin-top:1px}
+        .menu-item-update-badge{margin-left:auto;font-size:.58rem;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.3px;font-family:"Inter",sans-serif;flex-shrink:0}
+        .menu-item-update-badge.uptodate{background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.18);color:var(--neon-green)}
+        .menu-item-update-badge.available{background:rgba(41,151,255,.1);border:1px solid rgba(41,151,255,.22);color:var(--neon-blue);animation:umMenuBadgePulse 2.5s ease-in-out infinite}
+        @keyframes umMenuBadgePulse{0%,100%{box-shadow:none}50%{box-shadow:0 0 8px rgba(41,151,255,.25)}}
+
+        /* HERO & TIMER */
+        .top-section{display:grid;grid-template-columns:1.6fr 1fr;gap:80px;align-items:center;margin-bottom:50px}
+        .hero-text h1{font-size:4.5rem;font-weight:800;line-height:1.1;margin-bottom:24px;background:linear-gradient(160deg,#FFFFFF 0%,rgba(255,255,255,.82) 55%,rgba(200,215,255,.75) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px}
+        .hero-text p{font-size:1.3rem;color:rgba(255,255,255,.6);max-width:90%;line-height:1.6}
+        .badges-wrapper{display:flex;gap:15px;flex-wrap:wrap;margin-top:30px}
+        .ui-badge{display:inline-flex;align-items:center;gap:10px;padding:12px 22px;border-radius:50px;font-size:1rem;font-weight:600;opacity:0;transform:translateY(10px);transition:opacity .4s ease,transform .4s cubic-bezier(.34,1.56,.64,1);backdrop-filter:blur(8px);cursor:default}
+        .ui-badge.visible{opacity:1;transform:translateY(0)}
+        #special-badge{background:rgba(255,214,10,.08);border:1px solid rgba(255,214,10,.2);color:var(--neon-gold)}
+        .streak-badge{display:none;background:rgba(255,100,10,.08);border:1px solid rgba(255,100,10,.2);color:var(--neon-orange)}
+        .streak-badge.visible{display:inline-flex}
+        #streak-restore-btn{background:rgba(255,214,10,.1);border:1px solid rgba(255,214,10,.3);color:var(--neon-gold);cursor:pointer!important}
+        .timer-card{background:#000;border-radius:28px;padding:36px 32px 28px;display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden;transition:transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .35s ease;border:1px solid rgba(255,255,255,.18);box-shadow:0 30px 60px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.06) inset}
+        .timer-card.urgent{border-color:rgba(251,146,60,.18)}
+        .timer-card.urgent .timer-exam-label{color:rgba(251,146,60,.6)}
+        .timer-card.urgent .t-val{color:#fb923c;text-shadow:0 0 20px rgba(251,146,60,.2)}
+        .timer-card.urgent .t-sep{color:rgba(251,146,60,.3)}
+        .timer-card.urgent .timer-progress-bar{background:linear-gradient(90deg,#7c2d12,#ea580c,#fb923c)}
+        .timer-exam-label{font-size:.62rem;font-weight:600;letter-spacing:3.5px;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:28px;font-family:"Inter",sans-serif;text-align:center}
+        .timer-digits{display:flex;align-items:flex-end;justify-content:center;gap:0;width:100%}
+        .time-box{display:flex;flex-direction:column;align-items:center;flex:1}
+        .t-num-wrap{position:relative;overflow:hidden;height:3.8rem;display:flex;align-items:center;justify-content:center}
+        .t-val{font-size:3.4rem;font-weight:300;font-family:"SF Pro Display",-apple-system,"Helvetica Neue",sans-serif;color:#fff;letter-spacing:-1px;line-height:1;display:block;transition:opacity .1s ease;font-variant-numeric:tabular-nums}
+        .t-val.update-out{opacity:0}
+        .t-label{font-size:.55rem;font-weight:500;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:2.5px;margin-top:10px;font-family:"Inter",sans-serif}
+        .t-sep-col{display:flex;flex-direction:column;align-items:center;padding-bottom:26px;padding-left:2px;padding-right:2px;flex-shrink:0}
+        .t-sep{font-size:2rem;font-weight:100;color:rgba(255,255,255,.35);line-height:1;font-family:"SF Pro Display",sans-serif}
+        .timer-divider{width:100%;height:1px;background:rgba(255,255,255,.05);margin:24px 0 0}
+        .timer-progress-wrap{width:100%;margin-top:20px}
+        .timer-progress-track{width:100%;height:1px;background:rgba(255,255,255,.06);border-radius:10px;position:relative;overflow:visible}
+        .timer-progress-bar{height:100%;border-radius:10px;background:rgba(255,255,255,.55);transition:width 1s linear;position:relative}
+        .timer-progress-bar::after{content:"";position:absolute;right:-2px;top:-2px;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 6px rgba(255,255,255,.7)}
+        .timer-progress-labels{display:flex;justify-content:space-between;margin-top:10px;font-size:.55rem;color:rgba(255,255,255,.18);letter-spacing:.3px;font-family:"Inter",monospace}
+        .timer-phase-label{margin-top:20px;font-size:.6rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;padding:7px 16px;border-radius:50px;display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.35);background:rgba(255,255,255,.02);font-family:"Inter",sans-serif;transition:all .35s}
+        .phase-indicator{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+        .timer-phase-label.phase-prep{border-color:rgba(74,222,128,.35);color:rgba(74,222,128,.9);background:rgba(74,222,128,.06)}
+        .timer-phase-label.phase-prep .phase-indicator{background:#4ade80;box-shadow:0 0 6px rgba(74,222,128,.8);animation:phasePulse 2s infinite}
+        .timer-phase-label.phase-revision .phase-indicator{background:#c084fc;box-shadow:0 0 5px rgba(192,132,252,.8);animation:phasePulse 2s infinite}
+        .timer-phase-label.phase-revision{border-color:rgba(192,132,252,.35);color:rgba(192,132,252,.85);background:rgba(192,132,252,.05)}
+        .timer-phase-label.phase-final .phase-indicator,.timer-phase-label.phase-examday .phase-indicator{background:#fb923c;box-shadow:0 0 5px rgba(251,146,60,.8);animation:phasePulse 2s infinite}
+        @keyframes phasePulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.6)}}
+
+        /* INTELLIGENCE GRID */
+        .intelligence-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1.5fr;gap:12px;margin-top:24px;width:100%;opacity:0;transform:translateY(10px);transition:opacity .5s ease .4s,transform .5s ease .4s}
+        .intelligence-grid.show{opacity:1;transform:translateY(0)}
+        .neural-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:20px;padding:18px 20px;display:flex;flex-direction:column;justify-content:flex-start;position:relative;overflow:hidden;backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);gap:0;min-height:140px}
+        .neural-card::before{content:"";position:absolute;top:0;left:-100%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);transform:skewX(-20deg);transition:left .6s ease;pointer-events:none}
+        .neural-card:hover::before{left:200%}
+        .nc-label{font-size:.58rem;text-transform:uppercase;letter-spacing:1.6px;color:rgba(255,255,255,.35);font-weight:700;font-family:"Inter",sans-serif;display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:10px;flex-shrink:0}
+        .nc-val{font-size:1.55rem;font-weight:800;color:#fff;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+        .nc-sub{font-size:.66rem;color:rgba(255,255,255,.4);font-family:"Inter",sans-serif;line-height:1.4;margin-top:3px}
+        .nc-meta-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+        .nc-meta-pill{font-size:.57rem;font-weight:700;padding:3px 8px;border-radius:20px;font-family:"Inter",sans-serif;letter-spacing:.3px;white-space:nowrap;flex-shrink:0}
+        .nc-bar-track{width:100%;height:3px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-top:8px}
+        .nc-bar-fill{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(.22,1,.36,1)}
+        .ers-container{display:flex;align-items:center;gap:12px;flex:1}
+        .ers-ring-wrap{position:relative;width:52px;height:52px;flex-shrink:0}
+        .ers-circle-bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:4}
+        .ers-circle-fill{fill:none;stroke:var(--neon-blue);stroke-width:4;stroke-linecap:round;stroke-dasharray:138;stroke-dashoffset:138;transition:stroke-dashoffset 1.5s cubic-bezier(.22,1,.36,1);transform:rotate(-90deg);transform-origin:50% 50%}
+        .ers-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.82rem;font-weight:800;color:#fff}
+        .nc-focus-tag{font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;padding:3px 8px;border-radius:20px;font-family:"Inter",sans-serif;display:inline-block;margin-top:4px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;border:1px solid transparent}
+        .nc-focus-bar-wrap{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+        .nc-focus-row{display:flex;align-items:center;gap:7px}
+        .nc-focus-label{font-size:.6rem;color:rgba(255,255,255,.42);font-family:"Inter",sans-serif;width:68px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .nc-focus-bar{flex:1;height:3px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+        .nc-focus-fill{height:100%;border-radius:3px;transition:width 1s ease}
+        .nc-focus-pct{font-size:.58rem;font-weight:700;font-family:"Inter",monospace;color:rgba(255,255,255,.32);width:26px;text-align:right;flex-shrink:0}
+        .neural-insight-text{font-size:.8rem;line-height:1.6;color:rgba(255,255,255,.8);font-weight:400;font-family:"Inter",sans-serif;flex:1}
+        .insight-highlight{color:var(--neon-purple);font-weight:700}
+        .ai-sparkle{display:inline-block;animation:pulse 2s infinite;color:var(--neon-purple)}
+
+        /* EXAM COUNTDOWN PANEL */
+        .exam-mini-countdown{display:flex;align-items:center;justify-content:center;gap:6px;padding:16px 18px 12px}
+        .emc-block{text-align:center;min-width:48px}
+        .emc-num{font-size:1.9rem;font-weight:200;color:#fff;font-family:"SF Pro Display",sans-serif;letter-spacing:-1px;line-height:1;font-variant-numeric:tabular-nums;display:block}
+        .emc-label{font-size:.5rem;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.22);font-family:"Inter",sans-serif;margin-top:4px;display:block}
+        .emc-sep{font-size:1.3rem;font-weight:100;color:rgba(255,255,255,.18);padding-bottom:18px;line-height:1}
+        .exam-panel-bar-wrap{padding:0 18px 14px}
+        .exam-panel-bar-track{width:100%;height:3px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+        .exam-panel-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#30D158,#2997FF,#BF5AF2);transition:width 1s linear}
+        .exam-panel-bar-labels{display:flex;justify-content:space-between;margin-top:7px;font-size:.53rem;color:rgba(255,255,255,.18);font-family:"Inter",monospace;letter-spacing:.3px}
+
+        /* PHASE TIMELINE */
+        .phase-timeline-section{background:var(--glass-bg);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:32px;padding:40px 45px;margin-bottom:40px;position:relative;overflow:hidden}
+        .phase-timeline-section::before{content:"";position:absolute;inset:0;background:var(--glass-shine);pointer-events:none}
+        .phase-timeline-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:35px}
+        .phase-timeline-title{font-size:1.3rem;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:-.3px}
+        .phase-current-tag{font-size:.8rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:6px 16px;border-radius:20px;background:rgba(41,151,255,.12);color:var(--neon-blue);border:1px solid rgba(41,151,255,.25)}
+        .phase-track-wrapper{position:relative;padding-bottom:8px}
+        .phase-track{display:flex;align-items:flex-start;gap:0;position:relative}
+        .phase-track::before{content:"";position:absolute;top:24px;left:0;right:0;height:4px;background:rgba(255,255,255,.06);border-radius:4px;z-index:0}
+        .phase-progress-fill{position:absolute;top:24px;left:0;height:4px;border-radius:4px;z-index:1;transition:width 1s cubic-bezier(.22,1,.36,1) .3s;width:0%;pointer-events:none}
+        @keyframes popInTimeline{0%{opacity:0;transform:scale(.6) translateY(15px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+        .phase-item{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:2;opacity:0}
+        .phase-dot{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;border:2px solid rgba(255,255,255,.08);background:rgba(20,20,25,.9);transition:all .35s cubic-bezier(.34,1.56,.64,1);flex-shrink:0}
+        .phase-dot.done{border-color:rgba(48,209,88,.5);background:rgba(48,209,88,.12);box-shadow:0 0 12px rgba(48,209,88,.18)}
+        .phase-dot.active{border-color:rgba(41,151,255,.7);background:rgba(41,151,255,.15);box-shadow:0 0 14px rgba(41,151,255,.3);animation:phase-pulse 2.5s ease-in-out infinite}
+        .phase-dot.upcoming{opacity:.45}
+        .phase-label{margin-top:14px;font-size:.85rem;font-weight:600;color:rgba(255,255,255,.5);text-align:center;letter-spacing:.3px;max-width:90px;line-height:1.3;transition:color .25s}
+        .phase-item.done .phase-label{color:rgba(48,209,88,.8)}
+        .phase-item.active .phase-label{color:rgba(255,255,255,.95);font-weight:700}
+        .phase-date{font-size:.75rem;color:rgba(255,255,255,.28);margin-top:4px;text-align:center;font-family:"Inter",monospace;letter-spacing:.3px}
+        .phase-fill-prep{background:linear-gradient(90deg,#30D158,#2997FF)}
+        .phase-fill-revision{background:linear-gradient(90deg,#2997FF,#BF5AF2)}
+        .phase-fill-exam{background:linear-gradient(90deg,#BF5AF2,#FF640A)}
+        .dot-emoji{font-size:1.25rem;line-height:1;display:block}
+        .phase-dot.upcoming .dot-emoji{opacity:.4}
+        .dot-check{font-size:1.1rem;font-weight:700;color:rgba(48,209,88,.95);display:block}
+        @keyframes phase-pulse{0%,100%{box-shadow:0 0 14px rgba(41,151,255,.3)}50%{box-shadow:0 0 24px rgba(41,151,255,.55)}}
+
+        .sp-stats-bar{width:100%;margin-top:26px;background:rgba(14,14,18,.92);border:1px solid rgba(255,255,255,.09);border-radius:20px;padding:18px 24px;display:flex;align-items:stretch;gap:0;backdrop-filter:blur(20px) saturate(160%);position:relative;overflow:hidden;transition:border-color .3s,box-shadow .3s}
+        .sp-stats-bar:hover{border-color:rgba(255,255,255,.15);box-shadow:0 8px 32px rgba(0,0,0,.4)}
+        .sp-stats-bar::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.025) 0%,transparent 60%);pointer-events:none}
+        .sp-sync-dot{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:5px;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.2);font-family:"Inter",sans-serif}
+        .sp-sync-dot-circle{width:5px;height:5px;border-radius:50%;background:var(--neon-green);box-shadow:0 0 5px var(--neon-green);animation:pulse 2s infinite;flex-shrink:0}
+        .sp-sync-dot-circle.syncing{background:#FFD60A;box-shadow:0 0 5px #FFD60A;animation:syncSpin .8s linear infinite}
+        @keyframes syncSpin{0%{opacity:1}50%{opacity:.3}100%{opacity:1}}
+        .sp-stat-item{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:4px;padding:0 8px;min-width:0;position:relative}
+        .sp-stat-item + .sp-stat-item::before{content:"";position:absolute;left:0;top:10%;height:80%;width:1px;background:rgba(255,255,255,.07)}
+        .sp-stat-item.overall{flex:0 0 auto;padding-right:20px;margin-right:4px}
+        .sp-stat-item.overall + .sp-stat-item::before{left:0}
+        .sp-stat-item.today-time{flex:0 0 auto;padding-left:20px;margin-left:4px}
+        .sp-stat-pct{font-size:1.45rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;font-family:"Inter",sans-serif;letter-spacing:-.5px;transition:color .4s}
+        .sp-stat-pct.overall-pct{font-size:1.5rem;color:#fff}
+        .sp-stat-label{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.32);font-family:"Inter",sans-serif;white-space:nowrap;text-align:center}
+        .sp-stat-sub{font-size:.55rem;color:rgba(255,255,255,.22);font-family:"Inter",sans-serif;text-align:center;letter-spacing:.3px}
+        .sp-stat-bar{width:100%;height:2px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden;margin-top:2px}
+        .sp-stat-bar-fill{height:100%;border-radius:2px;transition:width .8s cubic-bezier(.22,1,.36,1)}
+        .sp-time-val{font-size:1.2rem;font-weight:800;color:#30D158;line-height:1;font-family:"Inter",sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap}
+        .sp-time-no-log{font-size:.62rem;color:rgba(255,255,255,.3);font-family:"Inter",sans-serif;margin-top:2px;text-align:center}
+        @keyframes spFlash{0%{opacity:1}30%{opacity:.4}60%{opacity:1}}
+        .sp-stat-pct.flash{animation:spFlash .5s ease}
+
+        .studyplan-section{background:var(--glass-bg);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:32px;padding:40px 45px;margin-bottom:40px;position:relative;overflow:hidden}
+        .studyplan-section::before{content:"";position:absolute;inset:0;background:var(--glass-shine);pointer-events:none}
+        .sp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:16px}
+        .sp-header-left{display:flex;align-items:center;gap:14px}
+        .sp-header-icon{font-size:1.4rem}
+        .sp-header-text{display:flex;flex-direction:column;gap:2px}
+        .sp-header-title{font-size:1.3rem;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:-.3px}
+        .sp-header-sub{font-size:.72rem;color:rgba(255,255,255,.32);font-family:"Inter",sans-serif}
+        .sp-header-right{display:flex;align-items:center;gap:12px}
+        .sp-day-badge{font-size:.72rem;font-weight:800;padding:7px 16px;border-radius:50px;background:rgba(41,151,255,.1);border:1px solid rgba(41,151,255,.25);color:var(--neon-blue);font-family:"Inter",sans-serif}
+        .sp-open-link{font-size:.75rem;font-weight:700;padding:7px 16px;border-radius:50px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);font-family:"Inter",sans-serif;cursor:pointer!important;transition:.2s;text-decoration:none}
+        .sp-open-link:hover{background:rgba(41,151,255,.1);border-color:rgba(41,151,255,.25);color:var(--neon-blue)}
+        .sp-day-grid-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+        .sp-day-grid-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.3);font-family:"Inter",sans-serif}
+        .sp-legend{display:flex;align-items:center;gap:14px}
+        .sp-legend-item{display:flex;align-items:center;gap:6px;font-size:.62rem;color:rgba(255,255,255,.3);font-family:"Inter",sans-serif}
+        .sp-legend-dot{width:8px;height:8px;border-radius:50%}
+        .sp-day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+        .sp-day-card{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:14px 12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:background .2s,border-color .2s,transform .2s;position:relative;overflow:hidden}
+        .sp-day-card:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14);transform:translateY(-2px)}
+        .sp-day-card.today{border-color:rgba(41,151,255,.5);background:rgba(41,151,255,.07);box-shadow:0 0 20px rgba(41,151,255,.1)}
+        .sp-day-card.today::before{content:"TODAY";position:absolute;top:0;left:0;right:0;font-size:.44rem;font-weight:800;letter-spacing:1.5px;text-align:center;padding:3px 0;background:rgba(41,151,255,.25);color:var(--neon-blue);border-radius:14px 14px 0 0}
+        .sp-day-card.past{background:rgba(48,209,88,.04);border-color:rgba(48,209,88,.15)}
+        .sp-day-card.future{opacity:.55}
+        .sp-day-num{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;font-family:"Inter",sans-serif;color:rgba(255,255,255,.3);margin-top:2px}
+        .sp-day-card.today .sp-day-num{color:var(--neon-blue)}
+        .sp-day-card.past .sp-day-num{color:rgba(48,209,88,.6)}
+        .sp-day-title{font-size:.82rem;font-weight:600;color:rgba(255,255,255,.8);line-height:1.3}
+        .sp-day-card.today .sp-day-title{color:#fff}
+        .sp-day-topics{display:flex;align-items:center;gap:6px;margin-top:2px}
+        .sp-day-topics-count{font-size:.65rem;font-weight:700;font-family:"Inter",monospace;color:rgba(255,255,255,.3)}
+        .sp-day-card.past .sp-day-topics-count{color:rgba(48,209,88,.7)}
+        .sp-day-card.today .sp-day-topics-count{color:var(--neon-blue)}
+        .sp-day-mini-bar{flex:1;height:3px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden}
+        .sp-day-mini-fill{height:100%;border-radius:3px;transition:width .6s ease}
+        .sp-day-past-check{position:absolute;bottom:8px;right:10px;font-size:.9rem;opacity:.7}
+
+        /* WHATS NEW */
+        .whats-new-section{background:var(--glass-bg);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:32px;padding:40px 45px;margin-bottom:40px;position:relative;overflow:hidden}
+        .whats-new-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;gap:16px}
+        .whats-new-title{display:flex;align-items:center;gap:14px}
+        .wn-header-icon{font-size:1.3rem;color:var(--neon-purple);animation:pulse 2s infinite}
+        .wn-header-text{display:flex;flex-direction:column;gap:2px}
+        .wn-header-title{font-size:1.2rem;font-weight:800;color:rgba(255,255,255,.95);letter-spacing:-.3px}
+        .wn-header-sub{font-size:.72rem;color:rgba(255,255,255,.32);font-family:"Inter",sans-serif}
+        .whats-new-title-badge{font-size:.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:4px 12px;border-radius:8px;background:rgba(191,90,242,.1);border:1px solid rgba(191,90,242,.25);color:var(--neon-purple);font-family:"Inter",sans-serif}
+        .whats-new-header-right{display:flex;align-items:center}
+        .whats-new-ver{font-size:.78rem;font-weight:700;font-family:"Inter",monospace;color:rgba(255,255,255,.22);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);padding:5px 14px;border-radius:20px}
+        .wn-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+        .wn-card{background:rgba(255,255,255,.018);border:1px solid rgba(255,255,255,.06);border-radius:22px;padding:24px 22px;display:flex;flex-direction:column;gap:12px;transition:background .25s,border-color .25s,transform .25s}
+        .wn-card:hover{background:rgba(255,255,255,.038);border-color:rgba(255,255,255,.12);transform:translateY(-3px)}
+        .wn-card.featured{background:linear-gradient(135deg,rgba(191,90,242,.07),rgba(41,151,255,.04));border-color:rgba(191,90,242,.22)}
+        .wn-card.alert{background:rgba(255,100,10,.04);border-color:rgba(255,100,10,.15)}
+        .wn-card-header{display:flex;align-items:center;justify-content:space-between}
+        .wn-icon-wrap{font-size:1.6rem}
+        .wn-card-number{font-size:.6rem;font-weight:700;color:rgba(255,255,255,.18);font-family:"Inter",monospace;letter-spacing:1px}
+        .wn-body{display:flex;flex-direction:column;gap:8px}
+        .wn-tag{display:inline-flex;align-items:center;gap:7px;font-size:.62rem;font-weight:800;text-transform:uppercase;letter-spacing:.8px;padding:4px 10px;border-radius:6px;width:fit-content;font-family:"Inter",sans-serif}
+        .wn-tag-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+        .wn-tag.purple{background:rgba(191,90,242,.1);border:1px solid rgba(191,90,242,.22);color:var(--neon-purple)}
+        .wn-tag.blue{background:rgba(41,151,255,.1);border:1px solid rgba(41,151,255,.22);color:var(--neon-blue)}
+        .wn-tag.green{background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.22);color:var(--neon-green)}
+        .wn-tag.orange{background:rgba(255,100,10,.1);border:1px solid rgba(255,100,10,.22);color:var(--neon-orange)}
+        .wn-card-title{font-size:1.05rem;font-weight:700;color:rgba(255,255,255,.92);line-height:1.3;letter-spacing:-.2px}
+        .wn-card-desc{font-size:.84rem;color:rgba(255,255,255,.48);line-height:1.6;font-family:"Inter",sans-serif}
+        .wn-card.featured .wn-card-title{font-size:1.2rem}
+        .wn-card.featured .wn-card-desc{font-size:.88rem;color:rgba(255,255,255,.55)}
+
+        /* SCHEDULE TABLE */
+        .schedule-section{background:var(--glass-bg);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-border);border-radius:32px;padding:45px 50px;margin-bottom:40px;position:relative;overflow:hidden}
+        .panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}
+        .panel-title{font-size:1.9rem;font-weight:700;letter-spacing:-.5px}
+        .live-dot{display:inline-block;width:10px;height:10px;background:var(--neon-green);border-radius:50%;box-shadow:0 0 10px var(--neon-green);animation:pulse 2s infinite;margin-right:10px}
+        .schedule-table{width:100%;border-collapse:separate;border-spacing:0 10px}
+        .schedule-table th{text-align:left;padding:0 25px 15px;color:rgba(255,255,255,.4);font-weight:600;font-size:.9rem;text-transform:uppercase;letter-spacing:1px}
+        .schedule-table tbody tr{background:rgba(255,255,255,.02);transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s,background .25s;animation:fadeInRow .7s ease-out backwards}
+        .schedule-table tbody tr:hover{background:var(--bg-card-hover);transform:translateY(-4px) scale(1.008) translateZ(0);box-shadow:0 16px 40px rgba(0,0,0,.5),0 0 20px rgba(41,151,255,.1);z-index:100}
+        .schedule-table td{padding:26px 28px;vertical-align:middle}
+        .schedule-table td:first-child{border-top-left-radius:20px;border-bottom-left-radius:20px}
+        .schedule-table td:last-child{border-top-right-radius:20px;border-bottom-right-radius:20px}
+        @keyframes fadeInRow{0%{opacity:0;transform:translateY(20px) scale(.97)}100%{opacity:1;transform:translateY(0) scale(1)}}
+        .exam-cell{display:flex;flex-direction:column;gap:10px}
+        .ex-name{font-size:1.2rem;font-weight:600;color:#fff}
+        .ex-cat{font-size:.85rem;color:rgba(255,255,255,.6);font-family:"Inter",monospace;background:rgba(255,255,255,.08);padding:5px 12px;border-radius:6px;width:fit-content;border:1px solid rgba(255,255,255,.05)}
+        .date-cell{font-size:1.1rem;font-weight:500;color:#e0e0e0;display:flex;align-items:center;gap:14px;white-space:nowrap}
+        .session-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:12px;font-size:.95rem;font-weight:600;white-space:nowrap}
+        .session-badge.afternoon{background:rgba(255,214,10,.1);color:var(--neon-gold);border:1px solid rgba(255,214,10,.2)}
+        .session-badge.morning{background:rgba(41,151,255,.1);color:var(--neon-blue);border:1px solid rgba(41,151,255,.2)}
+        .schedule-table tbody tr.cat36-hero{background:linear-gradient(120deg,rgba(255,214,10,.08) 0%,rgba(255,160,10,.05) 100%);border:1.5px solid rgba(255,214,10,.45);position:relative;box-shadow:0 0 0 1px rgba(255,214,10,.08) inset,0 8px 32px rgba(255,214,10,.1),0 2px 8px rgba(0,0,0,.4);animation:heroRowPulse 3.5s ease-in-out infinite}
+        @keyframes heroRowPulse{0%,100%{box-shadow:0 0 0 1px rgba(255,214,10,.08) inset,0 8px 32px rgba(255,214,10,.08),0 2px 8px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 1px rgba(255,214,10,.14) inset,0 8px 40px rgba(255,214,10,.18),0 2px 8px rgba(0,0,0,.4)}}
+        .schedule-table tbody tr.cat36-hero:hover{background:linear-gradient(120deg,rgba(255,214,10,.14) 0%,rgba(255,160,10,.09) 100%);border-color:rgba(255,214,10,.65);animation:none}
+        .cat36-crown{position:absolute;top:-1px;left:20px;font-size:.62rem;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;background:linear-gradient(90deg,#92400e,#d97706,#fbbf24,#d97706,#92400e);background-size:200% auto;animation:crownShimmer 3s linear infinite;color:#000;padding:4px 14px 4px 10px;border-radius:0 0 10px 10px;z-index:5;box-shadow:0 2px 10px rgba(255,214,10,.35)}
+        @keyframes crownShimmer{0%{background-position:0% center}100%{background-position:200% center}}
+        .cat36-hero .ex-name{font-size:1.3rem;font-weight:700;background:linear-gradient(135deg,#fff 30%,#fde68a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .cat36-hero .ex-cat{background:rgba(255,214,10,.1);border-color:rgba(255,214,10,.28);color:rgba(255,214,10,.85)}
+
+        /* APP CARDS */
+        .apps-title{font-size:2.2rem;font-weight:700;margin-bottom:40px;letter-spacing:-.5px}
+        .apps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;padding-bottom:120px;align-items:start}
+        .app-card{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:32px;padding:32px 30px;display:flex;align-items:center;gap:24px;text-decoration:none;color:white;transition:transform .25s ease,background .25s ease,border-color .25s ease,box-shadow .25s ease;position:relative;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.18);opacity:0;animation:slideInUp .45s ease both;cursor:pointer!important;backface-visibility:hidden}
+        .app-card:nth-child(1){animation-delay:.05s}.app-card:nth-child(2){animation-delay:.1s}.app-card:nth-child(3){animation-delay:.15s}
+        .app-card:nth-child(4){animation-delay:.2s}.app-card:nth-child(5){animation-delay:.25s}.app-card:nth-child(6){animation-delay:.3s}
+        .app-card:nth-child(7){animation-delay:.35s}.app-card:nth-child(8){animation-delay:.4s}.app-card:nth-child(9){animation-delay:.45s}
+        @keyframes slideInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        .app-card::before{content:"";position:absolute;top:0;left:-100%;width:80%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.03),transparent);transform:skewX(-20deg);transition:left .5s ease;pointer-events:none}
+        .app-card:hover{transform:translateY(-4px);background:var(--bg-card-hover);border-color:var(--card-hover-border);box-shadow:0 16px 36px rgba(0,0,0,.45),0 0 20px rgba(41,151,255,.08)}
+        .app-card:hover::before{left:180%}
+        .app-card:active{transform:translateY(-2px);opacity:.9}
+        .app-icon{width:66px;height:66px;background:rgba(255,255,255,.04);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:2rem;border:1px solid rgba(255,255,255,.07);transition:background .25s ease,border-color .25s ease,transform .25s ease;flex-shrink:0}
+        .app-card:hover .app-icon{background:rgba(41,151,255,.08);border-color:rgba(41,151,255,.25);transform:scale(1.06) rotate(3deg)}
+        .app-info{flex:1}
+        .app-info h3{margin:0 0 6px;font-size:1.3rem;font-weight:700;color:#fff}
+        .app-info p{margin:0;color:rgba(255,255,255,.48);font-size:.92rem;font-weight:500;line-height:1.4}
+        .new-badge{position:absolute;top:18px;right:18px;background:var(--neon-gold);color:#000;font-size:.72rem;font-weight:800;padding:4px 10px;border-radius:8px;z-index:2}
+        .beta-badge{position:absolute;top:18px;right:18px;background:var(--neon-purple);color:#fff;font-size:.72rem;font-weight:800;padding:4px 10px;border-radius:8px;z-index:2}
+
+        /* UPDATE MODAL */
+        .update-modal-overlay{position:fixed;inset:0;z-index:9999990;background:rgba(0,0,0,.78);backdrop-filter:blur(18px) saturate(150%);display:flex;align-items:flex-start;justify-content:center;padding-top:32px;opacity:0;visibility:hidden;transition:opacity .28s ease,visibility .28s ease}
+        .update-modal-overlay.show{opacity:1;visibility:visible}
+        .update-modal{width:490px;max-width:calc(100vw - 48px);background:rgba(11,11,15,.99);border:1px solid rgba(255,255,255,.1);border-top:1px solid rgba(255,255,255,.2);border-radius:30px;box-shadow:0 60px 120px rgba(0,0,0,.88);overflow:hidden;transform:scale(.96) translateY(-16px);transition:transform .36s cubic-bezier(.34,1.56,.64,1)}
+        .update-modal-overlay.show .update-modal{transform:scale(1) translateY(0)}
+        .um-beta-banner{display:flex;align-items:center;gap:12px;padding:11px 20px;background:linear-gradient(90deg,rgba(191,90,242,.1),rgba(41,151,255,.06));border-bottom:1px solid rgba(191,90,242,.18);position:relative;overflow:hidden;cursor:default}
+        .um-beta-banner::before{content:"";position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(191,90,242,.1),transparent);animation:umBetaShimmer 4s ease-in-out infinite}
+        @keyframes umBetaShimmer{0%{left:-80%}100%{left:130%}}
+        .um-beta-icon{width:28px;height:28px;border-radius:8px;flex-shrink:0;background:rgba(191,90,242,.12);border:1px solid rgba(191,90,242,.28);display:flex;align-items:center;justify-content:center;font-size:.85rem;z-index:1}
+        .um-beta-body{flex:1;z-index:1}
+        .um-beta-title{display:block;font-size:.7rem;font-weight:800;color:rgba(191,90,242,.92);letter-spacing:.3px;margin-bottom:1px}
+        .um-beta-desc{display:block;font-size:.62rem;color:rgba(255,255,255,.32);line-height:1.3;font-family:"Inter",sans-serif}
+        .um-beta-chip{font-size:.56rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:rgba(191,90,242,.1);border:1px solid rgba(191,90,242,.26);color:#BF5AF2;font-family:"Inter",sans-serif;flex-shrink:0;z-index:1}
+        .um-header{display:flex;align-items:flex-start;gap:16px;padding:24px 26px 18px;border-bottom:1px solid rgba(255,255,255,.06)}
+        .um-icon{width:52px;height:52px;border-radius:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;background:rgba(48,209,88,.09);border:1px solid rgba(48,209,88,.25);box-shadow:0 0 20px rgba(48,209,88,.07)}
+        .um-icon.has-update{background:rgba(41,151,255,.1);border-color:rgba(41,151,255,.3)}
+        .um-title-block{flex:1}
+        .um-title{font-size:1.15rem;font-weight:800;color:rgba(255,255,255,.95);letter-spacing:-.3px;margin-bottom:4px}
+        .um-subtitle{font-size:.76rem;color:rgba(255,255,255,.32);font-family:"Inter",sans-serif}
+        .um-close{width:32px;height:32px;border-radius:9px;flex-shrink:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:.9rem;color:rgba(255,255,255,.4);cursor:pointer!important;transition:.15s}
+        .um-close:hover{background:rgba(255,69,58,.1);border-color:rgba(255,69,58,.22);color:#FF453A}
+        .um-body{padding:20px 26px 24px}
+        .um-ver-pill{display:flex;align-items:center;gap:12px;background:rgba(48,209,88,.05);border:1px solid rgba(48,209,88,.14);border-radius:14px;padding:13px 16px;margin-bottom:16px}
+        .um-ver-pill.update{background:rgba(41,151,255,.06);border-color:rgba(41,151,255,.18)}
+        .um-ver-pill-icon{font-size:1.1rem;flex-shrink:0}
+        .um-ver-pill-info{flex:1}
+        .um-ver-pill-ver{display:block;font-size:.95rem;font-weight:800;color:rgba(48,209,88,.9);font-family:"Inter",monospace;margin-bottom:2px}
+        .um-ver-pill.update .um-ver-pill-ver{color:var(--neon-blue)}
+        .um-ver-pill-build{display:block;font-size:.62rem;color:rgba(255,255,255,.25);font-family:"Inter",monospace}
+        .um-ver-badge{font-size:.58rem;font-weight:800;letter-spacing:.8px;text-transform:uppercase;padding:4px 10px;border-radius:7px;background:rgba(48,209,88,.1);border:1px solid rgba(48,209,88,.22);color:#30D158;font-family:"Inter",sans-serif}
+        .um-ver-badge.new{background:rgba(41,151,255,.1);border-color:rgba(41,151,255,.25);color:var(--neon-blue)}
+        .um-section-label{font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:1.4px;color:rgba(255,255,255,.18);font-family:"Inter",sans-serif;margin-bottom:9px;margin-top:16px}
+        .um-changelog{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:13px;padding:13px 15px;max-height:170px;overflow-y:auto}
+        .um-cl-item{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;font-size:.81rem;color:rgba(255,255,255,.5);font-family:"Inter",sans-serif;line-height:1.45}
+        .um-cl-item:last-child{margin-bottom:0}
+        .um-cl-dot{width:5px;height:5px;border-radius:50%;margin-top:6px;flex-shrink:0}
+        .um-cl-dot.green{background:#30D158}.um-cl-dot.blue{background:#2997FF}.um-cl-dot.gold{background:#FFD60A}.um-cl-dot.orange{background:#FF640A}.um-cl-dot.purple{background:#BF5AF2}.um-cl-dot.red{background:#FF453A}
+        .um-actions{display:flex;gap:10px;margin-top:18px}
+        .um-btn{flex:1;padding:13px 18px;border-radius:13px;font-size:.88rem;font-weight:700;border:none;cursor:pointer!important;font-family:inherit;transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+        .um-btn:hover{transform:translateY(-2px)}.um-btn:active{transform:scale(.97)}
+        .um-btn-secondary{background:rgba(255,255,255,.06);color:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.08)}
+        .um-btn-secondary:hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9)}
+        .um-btn-primary{background:linear-gradient(135deg,#2997FF,#0077EE);color:#fff;box-shadow:0 6px 20px rgba(41,151,255,.22)}
+        .um-btn-primary:hover{box-shadow:0 12px 30px rgba(41,151,255,.4)}
+        .um-btn-primary::before{content:"";position:absolute;top:0;left:-100%;width:80%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);transform:skewX(-20deg);transition:left .4s}
+        .um-btn-primary:hover::before{left:160%}
+        .um-build-info{margin-top:11px;text-align:center;font-size:.59rem;color:rgba(255,255,255,.12);font-family:"Inter",monospace;letter-spacing:.3px}
+        .um-beta-note{background:linear-gradient(135deg,rgba(191,90,242,.08),rgba(41,151,255,.05));border:1px solid rgba(191,90,242,.2);border-left:3px solid var(--neon-purple);border-radius:12px;padding:12px 16px;font-size:.79rem;color:rgba(255,255,255,.65);line-height:1.55;font-family:"Inter",sans-serif;margin-bottom:4px}
+
+        @keyframes pulse{0%,100%{opacity:.7;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
+        @keyframes slideUpBanner{from{opacity:0;transform:translateX(-50%) translateY(30px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    </style>
+</head>
+
+<body class="login-locked">
+    <div class="ambient-bg"><div class="orb orb-1"></div><div class="orb orb-2"></div></div>
+
+    <div id="welcome-overlay">
+        <div class="login-card">
+            <h1 class="login-title">Portal Access</h1>
+            <div class="input-wrapper"><input type="text" id="nameInput" class="input-field" placeholder="Username" autocomplete="off" aria-label="Username"></div>
+            <div class="input-wrapper"><input type="password" id="passInput" class="input-field" placeholder="Password" aria-label="Password"></div>
+            <button class="login-btn" id="loginBtn">Enter Portal</button>
+        </div>
+        <div class="greeting-container"><div class="greeting-text" id="greetingText">Welcome</div></div>
+    </div>
+
+    <div id="main-app">
+        <div class="live-clock" id="liveClock">
+            <span class="clock-icon" id="clock-emoji">🕐</span>
+            <span class="clock-text" id="clock-display">12:00 PM</span>
+            <span class="clock-tz">🌍 IST</span>
+        </div>
+
+        <div class="user-profile-widget" id="profileWidget">
+            <div class="notif-bell-btn" id="notifBell" role="button" tabindex="0">
+                <span class="notif-bell-icon">🔔</span>
+                <span class="notif-badge" id="notifBadge">0</span>
+                <div class="notif-panel" id="notifPanel">
+                    <div class="notif-panel-header">
+                        <div class="notif-panel-title">Notifications<span class="notif-panel-title-count" id="notifUnreadCount" style="display:none">0</span></div>
+                        <div class="notif-panel-actions">
+                            <button class="notif-mark-all-btn" id="notifMarkAllBtn">Mark all read</button>
+                            <button class="notif-clear-btn" id="notifClearBtn">Clear all</button>
+                        </div>
+                    </div>
+                    <div class="notif-list" id="notifList"><div class="notif-empty"><div>🔕</div><div>No notifications yet</div></div></div>
+                    <div class="notif-panel-footer" id="notifFooter">CSEB Portal · Notifications</div>
+                </div>
+            </div>
+
+            <div class="profile-btn" id="profileBtn" role="button" tabindex="0">
+                <div class="avatar" id="userAvatar">A</div>
+                <span class="user-name" id="displayUser">User</span>
+                <span class="user-chevron">▾</span>
+            </div>
+
+            <div class="profile-dropdown" id="profileMenu">
+                <div class="dd-section-label" style="padding-top:10px">Quick Access</div>
+                <div class="menu-item" data-action="open" data-url="https://cooperativestudy.wixsite.com/co-opstudy/workspace">
+                    <span class="menu-item-icon">🚀</span>Workspace<span class="menu-item-arrow">›</span>
+                </div>
+                <div class="menu-item" id="checkUpdateMenuItem" data-action="checkUpdate">
+                    <span class="menu-item-icon">🔄</span>Software Update
+                    <span class="menu-item-update-badge available" id="updateMenuBadge">v3.1 Beta</span>
+                </div>
+                <div class="dd-divider"></div>
+                <div class="dd-section-label">Dashboard</div>
+
+                <div class="dd-expand-section">
+                    <div class="dd-expand-toggle" id="exam-cd-toggle" data-panel="exam-cd">
+                        <span class="dd-expand-icon">🎯</span>
+                        <span class="dd-expand-label">Exam Countdown</span>
+                        <span class="dd-badge dd-badge-gold" id="exam-cd-badge">— days</span>
+                        <span class="dd-expand-chevron">▾</span>
+                    </div>
+                    <div class="dd-expand-panel" id="exam-cd-panel">
+                        <div style="padding:0 0 4px">
+                            <div class="exam-mini-countdown" id="emc-container">
+                                <div class="emc-block"><span class="emc-num" id="emc-day">—</span><span class="emc-label">Days</span></div>
+                                <span class="emc-sep">:</span>
+                                <div class="emc-block"><span class="emc-num" id="emc-hour">—</span><span class="emc-label">Hours</span></div>
+                                <span class="emc-sep">:</span>
+                                <div class="emc-block"><span class="emc-num" id="emc-min">—</span><span class="emc-label">Mins</span></div>
+                                <span class="emc-sep">:</span>
+                                <div class="emc-block"><span class="emc-num" id="emc-sec">—</span><span class="emc-label">Secs</span></div>
+                            </div>
+                            <div class="exam-panel-bar-wrap">
+                                <div class="exam-panel-bar-track"><div class="exam-panel-bar-fill" id="emc-bar" style="width:0%"></div></div>
+                                <div class="exam-panel-bar-labels"><span>Study Start — Mar 1</span><span>Exam — Mar 22</span></div>
+                            </div>
+                            <div style="height:1px;background:rgba(255,255,255,.05);margin:0 14px 2px"></div>
+                            <div class="status-row"><span class="status-row-label">🕐 Phase</span><span class="status-row-val green" id="emc-phase">—</span></div>
+                            <div class="status-row"><span class="status-row-label">📅 Plan Day</span><span class="status-row-val gold" id="emc-plan-day">—</span></div>
+                            <div class="status-row"><span class="status-row-label">⏳ Days Remaining</span><span class="status-row-val" id="emc-days-left-row">—</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dd-expand-section">
+                    <div class="dd-expand-toggle" id="activity-toggle" data-panel="activity">
+                        <span class="dd-expand-icon">🕐</span>
+                        <span class="dd-expand-label">Recent Activity</span>
+                        <span class="dd-badge dd-badge-blue" id="activity-count">Today</span>
+                        <span class="dd-expand-chevron">▾</span>
+                    </div>
+                    <div class="dd-expand-panel" id="activity-panel">
+                        <div class="history-list" id="activity-list"><div class="activity-empty">No sessions yet today</div></div>
+                    </div>
+                </div>
+
+                <div class="dd-expand-section">
+                    <div class="dd-expand-toggle" id="exp-drop-toggle-btn" data-panel="exp-drop">
+                        <span class="dd-expand-icon">🧪</span>
+                        <span class="dd-expand-label">OS Experiments</span>
+                        <span class="dd-badge dd-badge-purple" id="exp-drop-count">0 on</span>
+                        <span class="dd-expand-chevron">▾</span>
+                    </div>
+                    <div class="dd-expand-panel" id="exp-drop-panel">
+                        <div id="exp-drop-grid" style="padding:6px 4px 10px"></div>
+                    </div>
+                </div>
+
+                <div class="dd-divider"></div>
+                <div class="dd-section-label">Account</div>
+                <div class="menu-item logout" data-action="logout">
+                    <span class="menu-item-icon">🚪</span>Sign Out
+                </div>
+                <div class="dd-footer">
+                    <div class="dd-footer-build"><div class="dd-footer-dot"></div>CSEB Portal · OS 27 Beta</div>
+                    <div class="dd-footer-version">Build 2026.03.04</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOP SECTION -->
+        <div class="top-section section-reveal">
+            <div class="hero-text">
+                <h1 id="dynamic-greeting">Welcome, User</h1>
+                <p>Your centralized dashboard for Kerala Co-operative Examinations. Track progress, study smarter, and stay ahead every day.</p>
+                <div class="badges-wrapper">
+                    <div id="special-badge" class="ui-badge"></div>
+                    <div id="home-streak-badge" class="streak-badge ui-badge"></div>
+                    <div id="streak-restore-btn" class="ui-badge streak-badge" data-action="restoreStreak" role="button" tabindex="0" style="display:none">⚡ Restore Streak</div>
+                </div>
+
+                <div class="sp-stats-bar" id="sp-stats-bar">
+                    <div class="sp-sync-dot" id="sp-sync-indicator">
+                        <div class="sp-sync-dot-circle" id="sp-sync-circle"></div>LIVE
+                    </div>
+                    <div class="sp-stat-item overall">
+                        <span class="sp-stat-pct overall-pct" id="sbar-overall">0%</span>
+                        <span class="sp-stat-label">OVERALL</span>
+                        <span class="sp-stat-sub" id="sbar-day">Day 1/21</span>
+                    </div>
+                    <div class="sp-stat-item">
+                        <span class="sp-stat-pct" id="sbar-eng" style="color:#FF453A">0%</span>
+                        <div class="sp-stat-bar"><div class="sp-stat-bar-fill" id="sbar-eng-bar" style="background:#FF453A;width:0%"></div></div>
+                        <span class="sp-stat-label">ENGLISH</span>
+                    </div>
+                    <div class="sp-stat-item">
+                        <span class="sp-stat-pct" id="sbar-gk" style="color:#30D158">0%</span>
+                        <div class="sp-stat-bar"><div class="sp-stat-bar-fill" id="sbar-gk-bar" style="background:#30D158;width:0%"></div></div>
+                        <span class="sp-stat-label">GEN. KNOW.</span>
+                    </div>
+                    <div class="sp-stat-item">
+                        <span class="sp-stat-pct" id="sbar-rsn" style="color:#FF6AC1">0%</span>
+                        <div class="sp-stat-bar"><div class="sp-stat-bar-fill" id="sbar-rsn-bar" style="background:#FF6AC1;width:0%"></div></div>
+                        <span class="sp-stat-label">REASONING</span>
+                    </div>
+                    <div class="sp-stat-item">
+                        <span class="sp-stat-pct" id="sbar-cop" style="color:#BF5AF2">0%</span>
+                        <div class="sp-stat-bar"><div class="sp-stat-bar-fill" id="sbar-cop-bar" style="background:#BF5AF2;width:0%"></div></div>
+                        <span class="sp-stat-label">CO-OP LAW</span>
+                    </div>
+                    <div class="sp-stat-item">
+                        <span class="sp-stat-pct" id="sbar-act" style="color:#FF640A">0%</span>
+                        <div class="sp-stat-bar"><div class="sp-stat-bar-fill" id="sbar-act-bar" style="background:#FF640A;width:0%"></div></div>
+                        <span class="sp-stat-label">CO-OP ACTS</span>
+                    </div>
+                    <div class="sp-stat-item">
+                        <span class="sp-stat-pct" id="sbar-bkg" style="color:#2997FF">0%</span>
+                        <div class="sp-stat-bar"><div class="sp-stat-bar-fill" id="sbar-bkg-bar" style="background:#2997FF;width:0%"></div></div>
+                        <span class="sp-stat-label">BANKING</span>
+                    </div>
+                    <div class="sp-stat-item">
+                        <span class="sp-stat-pct" id="sbar-acc" style="color:#FFD60A">0%</span>
+                        <div class="sp-stat-bar"><div class="sp-stat-bar-fill" id="sbar-acc-bar" style="background:#FFD60A;width:0%"></div></div>
+                        <span class="sp-stat-label">ACCOUNTING</span>
+                    </div>
+                    <div class="sp-stat-item today-time">
+                        <span class="sp-time-val" id="sbar-time">0m</span>
+                        <span class="sp-stat-label">TODAY</span>
+                        <span class="sp-time-no-log" id="sbar-time-sub">No logs</span>
+                    </div>
+                </div>
+
+                <div class="intelligence-grid" id="intelligence-grid" style="display:none">
+                    <div class="neural-card" id="nc-velocity">
+                        <div class="nc-label">⚡ Velocity</div>
+                        <div class="nc-val" id="vel-hrs">0.0<span style="font-size:.8rem;color:rgba(255,255,255,.4);margin-left:2px">h/d</span></div>
+                        <div class="nc-bar-track"><div class="nc-bar-fill" id="vel-bar" style="background:var(--neon-blue);width:0%"></div></div>
+                        <div class="nc-meta-row">
+                            <div class="nc-sub" id="vel-topics">0 topics done</div>
+                            <div class="nc-meta-pill" id="vel-pill" style="background:rgba(41,151,255,.12);color:var(--neon-blue);border:1px solid rgba(41,151,255,.2)">—</div>
+                        </div>
+                    </div>
+                    <div class="neural-card" id="nc-readiness">
+                        <div class="nc-label">🎯 Readiness</div>
+                        <div class="ers-container">
+                            <div class="ers-ring-wrap">
+                                <svg width="52" height="52" viewBox="0 0 52 52">
+                                    <circle class="ers-circle-bg" cx="26" cy="26" r="22"/>
+                                    <circle class="ers-circle-fill" id="ers-ring" cx="26" cy="26" r="22"/>
+                                </svg>
+                                <div class="ers-num" id="ers-val">0</div>
+                            </div>
+                            <div style="min-width:0">
+                                <div style="font-weight:800;font-size:.95rem;color:#fff;line-height:1.2" id="ers-status">Needs Data</div>
+                                <div style="font-size:.6rem;color:rgba(255,255,255,.3);text-transform:uppercase;font-weight:700;letter-spacing:.8px;margin-top:4px">ERS Score</div>
+                                <div class="nc-meta-pill" id="ers-pill" style="background:rgba(41,151,255,.1);color:var(--neon-blue);border:1px solid rgba(41,151,255,.2);margin-top:6px;display:inline-block">Day <span id="ers-day">1</span>/21</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="neural-card" id="nc-focus" style="border-color:rgba(255,214,10,.15);background:linear-gradient(135deg,rgba(20,20,25,.8),rgba(255,214,10,.03))">
+                        <div class="nc-label" style="color:rgba(255,214,10,.7)">📊 Subject Focus</div>
+                        <div id="focus-top" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                            <div style="font-size:.88rem;font-weight:700;color:#fff;white-space:nowrap" id="focus-weakest">—</div>
+                            <div class="nc-focus-tag" id="focus-tag" style="background:rgba(255,100,10,.12);color:#FF640A;border-color:rgba(255,100,10,.2)">Needs Work</div>
+                        </div>
+                        <div class="nc-focus-bar-wrap" id="focus-bars"></div>
+                    </div>
+                    <div class="neural-card" id="nc-insight" style="border-color:rgba(191,90,242,.25);background:linear-gradient(135deg,rgba(20,20,25,.8),rgba(191,90,242,.05))">
+                        <div class="nc-label" style="color:var(--neon-purple)"><span class="ai-sparkle">✦</span> Neural Insight</div>
+                        <div class="neural-insight-text" id="neural-insight">Analyzing study patterns to generate adaptive recommendation…</div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-shrink:0">
+                            <div style="font-size:.55rem;color:rgba(255,255,255,.18);font-family:'Inter',monospace;white-space:nowrap">OS 27 Neural Engine</div>
+                            <div class="nc-meta-pill" id="insight-conf" style="background:rgba(191,90,242,.1);color:var(--neon-purple);border:1px solid rgba(191,90,242,.2)">—</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timer-card">
+                <div class="timer-exam-label">Time Remaining Until Exam</div>
+                <div class="timer-digits">
+                    <div class="time-box"><div class="t-num-wrap"><div class="t-val" id="day">00</div></div><div class="t-label">Days</div></div>
+                    <div class="t-sep-col"><span class="t-sep">:</span></div>
+                    <div class="time-box"><div class="t-num-wrap"><div class="t-val" id="hour">00</div></div><div class="t-label">Hours</div></div>
+                    <div class="t-sep-col"><span class="t-sep">:</span></div>
+                    <div class="time-box"><div class="t-num-wrap"><div class="t-val" id="min">00</div></div><div class="t-label">Mins</div></div>
+                    <div class="t-sep-col"><span class="t-sep">:</span></div>
+                    <div class="time-box"><div class="t-num-wrap"><div class="t-val" id="sec">00</div></div><div class="t-label">Secs</div></div>
+                </div>
+                <div class="timer-divider"></div>
+                <div class="timer-progress-wrap">
+                    <div class="timer-progress-track"><div class="timer-progress-bar" id="timer-progress-bar" style="width:0%"></div></div>
+                    <div class="timer-progress-labels"><span>Study Start — Mar 1</span><span>Exam Day — Mar 22</span></div>
+                </div>
+                <div class="timer-phase-label phase-prep" id="timer-phase-label">
+                    <div class="phase-indicator"></div>Phase 1 · Preparation
+                </div>
+            </div>
+        </div>
+
+        <!-- PHASE TIMELINE -->
+        <div class="phase-timeline-section section-reveal">
+            <div class="phase-timeline-header">
+                <div class="phase-timeline-title">🕐 Exam Journey Timeline</div>
+                <div class="phase-current-tag" id="phase-current-tag">Phase: Loading…</div>
+            </div>
+            <div class="phase-track-wrapper">
+                <div class="phase-track" id="phase-track"></div>
+                <div class="phase-progress-fill phase-fill-prep" id="phase-progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- WHAT'S NEW -->
+        <div class="whats-new-section section-reveal">
+            <div class="whats-new-header">
+                <div class="whats-new-title">
+                    <div class="wn-header-icon">✦</div>
+                    <div class="wn-header-text">
+                        <span class="wn-header-title">OS 27 · What's New</span>
+                        <span class="wn-header-sub">Released 4 March 2026 · Beta Now Live</span>
+                    </div>
+                    <span class="whats-new-title-badge">Beta</span>
+                </div>
+                <div class="whats-new-header-right"><span class="whats-new-ver">OS 27</span></div>
+            </div>
+            <div class="wn-grid">
+                <div class="wn-card featured">
+                    <div class="wn-card-header"><div class="wn-icon-wrap">🧠</div><span class="wn-card-number">01 / 05</span></div>
+                    <div class="wn-body">
+                        <div class="wn-tag purple"><span class="wn-tag-dot"></span>New Engine</div>
+                        <div class="wn-card-title">Neural Engine v2</div>
+                        <div class="wn-card-desc">OS 27 upgrades to a <b>4-panel Intelligence Grid</b> — Velocity, Readiness, Subject Focus, and Neural Insight all powered simultaneously.</div>
+                    </div>
+                </div>
+                <div class="wn-card">
+                    <div class="wn-card-header"><div class="wn-icon-wrap">📊</div><span class="wn-card-number">02 / 05</span></div>
+                    <div class="wn-body">
+                        <div class="wn-tag blue"><span class="wn-tag-dot"></span>New</div>
+                        <div class="wn-card-title">Subject Focus Card</div>
+                        <div class="wn-card-desc">A dedicated <b>Study Focus</b> panel shows your 3 weakest subjects ranked with live progress bars — so you always know where to study next.</div>
+                    </div>
+                </div>
+                <div class="wn-card">
+                    <div class="wn-card-header"><div class="wn-icon-wrap">⚡</div><span class="wn-card-number">03 / 05</span></div>
+                    <div class="wn-body">
+                        <div class="wn-tag green"><span class="wn-tag-dot"></span>Upgraded</div>
+                        <div class="wn-card-title">Velocity Tier System</div>
+                        <div class="wn-card-desc">Velocity now shows a <b>dynamic tier</b>: 🔥 On Fire, ✅ Solid, ⚠️ Steady, or 🐢 Slow — with a color-coded bar benchmarked to 4 hrs/day.</div>
+                    </div>
+                </div>
+                <div class="wn-card">
+                    <div class="wn-card-header"><div class="wn-icon-wrap">🔄</div><span class="wn-card-number">04 / 05</span></div>
+                    <div class="wn-body">
+                        <div class="wn-tag gold"><span class="wn-tag-dot"></span>New</div>
+                        <div class="wn-card-title">Active Sync</div>
+                        <div class="wn-card-desc">The <b>Live Stats Bar</b> now syncs instantly across tabs — study on the plan page, and your dashboard updates in real-time with a pulsing green dot.</div>
+                    </div>
+                </div>
+                <div class="wn-card alert">
+                    <div class="wn-card-header"><div class="wn-icon-wrap">🎯</div><span class="wn-card-number">05 / 05</span></div>
+                    <div class="wn-body">
+                        <div class="wn-tag orange"><span class="wn-tag-dot"></span>Exam Alert</div>
+                        <div class="wn-card-title">18 Days Remaining</div>
+                        <div class="wn-card-desc">Jr. Clerk exam is very close. Use the Subject Focus panel to target weak points. Ensure your <b>Admit Card</b> is downloaded and printed before exam day.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXAM SCHEDULE -->
+        <div class="schedule-section section-reveal">
+            <div class="panel-header">
+                <div class="panel-title">Exam Schedule</div>
+                <div style="font-size:.9rem;color:#30D158;display:flex;align-items:center"><span class="live-dot"></span>LIVE UPDATES</div>
+            </div>
+            <table class="schedule-table">
+                <thead><tr><th width="50%">Examination Category</th><th width="30%">Scheduled Date</th><th width="20%">Session</th></tr></thead>
+                <tbody>
+                    <tr class="cat36-hero" style="position:relative">
+                        <td style="position:relative">
+                            <span class="cat36-crown">⭐ YOUR EXAM · 22 MARCH 2026</span>
+                            <div class="exam-cell" style="margin-top:10px"><span class="ex-name">Jr. Clerk (Super Grade)</span><span class="ex-cat">Cat: 36/2025</span></div>
+                        </td>
+                        <td><div class="date-cell"><span>📅</span> 22 Mar 2026</div></td>
+                        <td><span class="session-badge afternoon">☀️ Afternoon</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="exam-cell"><span class="ex-name">Jr. Clerk (Special I)</span><span class="ex-cat">Cat: 37/2025</span></div></td>
+                        <td><div class="date-cell"><span>📅</span> 12 Apr 2026</div></td>
+                        <td><span class="session-badge afternoon">☀️ Afternoon</span></td>
+                    </tr>
+                    <tr>
+                        <td><div class="exam-cell"><span class="ex-name">Jr. Clerk (II - VII)</span><span class="ex-cat">Cat: 38/2025</span></div></td>
+                        <td><div class="date-cell"><span>📅</span> 26 Apr 2026</div></td>
+                        <td><span class="session-badge afternoon">☀️ Afternoon</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- APPLICATION LIBRARY -->
+        <div class="apps-title section-reveal">Application Library</div>
+        <div class="apps-grid section-reveal" id="appsGrid">
+            <div class="app-card section-reveal" data-action="open" data-url="https://cooperativestudy.wixsite.com/co-opstudy/ai-study-lab">
+                <div class="beta-badge">BETA</div><div class="app-icon">🧠</div><div class="app-info"><h3>AI Study Lab</h3><p>Smart Strategies &amp; Tips</p></div>
+            </div>
+            <div class="app-card section-reveal" data-action="open" data-url="https://cooperativestudy.wixsite.com/co-opstudy/study-plan">
+                <div class="new-badge">NEW</div><div class="app-icon">🗓️</div><div class="app-info"><h3>Study Plan</h3><p>Structured Exam Roadmap</p></div>
+            </div>
+            <div class="app-card section-reveal" data-action="open" data-url="https://drive.google.com/file/d/13BYxKINuE0MrJkpWz0wASrHOsMNbgcAb/view?usp=drive_link">
+                <div class="app-icon">📑</div><div class="app-info"><h3>Exam Syllabus</h3><p>Detailed Topics &amp; Marks</p></div>
+            </div>
+            <div class="app-card section-reveal" data-action="open" data-url="https://cooperativestudy.wixsite.com/co-opstudy/study-materials">
+                <div class="app-icon">📚</div><div class="app-info"><h3>Study Material</h3><p>Comprehensive PDF Notes</p></div>
+            </div>
+            <div class="app-card section-reveal" data-action="open" data-url="https://cooperativestudy.wixsite.com/co-opstudy/mock-test">
+                <div class="app-icon">✏️</div><div class="app-info"><h3>Mock Tests</h3><p>Practice Quizzes</p></div>
+            </div>
+            <div class="app-card section-reveal" data-action="open" data-url="https://cooperativestudy.wixsite.com/co-opstudy/question-papers">
+                <div class="app-icon">📜</div><div class="app-info"><h3>Question Papers</h3><p>Previous Year Sets</p></div>
+            </div>
+            <div class="app-card section-reveal" data-action="open" data-url="https://cooperativestudy.wixsite.com/co-opstudy/video-classes">
+                <div class="app-icon">🎬</div><div class="app-info"><h3>Video Classes</h3><p>Visual Learning</p></div>
+            </div>
+            <div class="app-card section-reveal" data-action="open" data-url="https://cooperativestudy.wixsite.com/co-opstudy/presentation">
+                <div class="app-icon">🖥️</div><div class="app-info"><h3>Presentations</h3><p>Slides &amp; Decks</p></div>
+            </div>
+            <div class="app-card section-reveal" data-action="open" data-url="https://cooperativestudy.wixsite.com/co-opstudy/current-affairs">
+                <div class="app-icon">📰</div><div class="app-info"><h3>Current Affairs</h3><p>World, Budget &amp; News</p></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+"use strict";
+const CONFIG = {
+    USERNAME_MIN_LENGTH: 2, USERNAME_MAX_LENGTH: 40,
+    ENCODED_PASS: "MTcxODAw",
+    EXAM_DATE:   "2026-03-22T14:00:00",
+    STUDY_START: "2026-03-01T00:00:00",
+    TOAST_DURATION: 4000,
+    SESSION_HISTORY_LIMIT: 50,
+    MAX_DELTA_SECONDS: 3600,
+    PHASES: [
+        { num:1, label:"Preparation", emoji:"📚", start:"2026-03-01", end:"2026-03-14", fillCls:"phase-fill-prep"     },
+        { num:2, label:"Revision",    emoji:"🔄", start:"2026-03-15", end:"2026-03-21", fillCls:"phase-fill-revision" },
+        { num:3, label:"Exam Day",    emoji:"🎯", start:"2026-03-22", end:null,         fillCls:"phase-fill-exam"     }
+    ]
+};
+
+const UPDATE_CONFIG = {
+    CURRENT_VERSION:"3.1", CURRENT_BUILD:"2026.03.04", RELEASE_DATE:"4 March 2026",
+    UPDATE_AVAILABLE:false, NEW_VERSION:"", UPDATE_URL:"", UPDATE_DATE:"",
+    CHANGELOG:[
+        { type:"purple", text:"OS 27 Neural Engine — 4-panel Intelligence Grid with Subject Focus card" },
+        { type:"blue",   text:"Compact Live Stats Bar with per-subject progress & Active Sync engine"   },
+        { type:"gold",   text:"Velocity tier system: On Fire / Solid / Steady / Slow ratings"           },
+        { type:"green",  text:"ERS algorithm upgrade: velocity-weighted readiness scoring"              },
+        { type:"red",    text:"Major version jump: OS 3.0 → OS 27 v3.1 (new naming convention)"        }
+    ],
+    BETA:{ SHOW:true, CODENAME:"OS 27", DESCRIPTION:"OS 27 Beta v3.1 is now live — featuring the upgraded Neural Engine, real-time Active Sync, and 4-panel Intelligence Grid." }
+};
+
+const _pad2 = v => v < 10 ? "0"+v : ""+v;
+const _CSEB_START = new Date("2026-03-01T00:00:00");
+
+const ScrollFix = { lock(){ document.body.classList.add("login-locked") }, unlock(){ document.body.classList.remove("login-locked") } };
+
+const Perf = {
+    _pRaf:null, _queue:[],
+    scheduleDOMWrite(fn){ this._queue.push(fn); if(!this._pRaf) this._pRaf = requestAnimationFrame(()=>{ this._pRaf=null; this._queue.splice(0).forEach(f=>{ try{f()}catch(e){} }) }) },
+    throttle(fn,ms=40){ let last=0; return function(...a){ const now=Date.now(); if(now-last<ms)return; last=now; fn.apply(this,a) } },
+    safeExec(fn,lbl){ try{ return fn() }catch(e){ SafeMode.log(e); SafeMode.activate((lbl||"exec")+": "+e.message); return null } }
+};
+
+const SafeMode = {
+    active:false, errorLog:[],
+    activate(reason){ if(this.active)return; this.active=true; console.warn("[CrashGuard]",reason); try{ TimerManager.stop(); this._showBanner(); }catch(e){} },
+    _showBanner(){ try{ if(document.getElementById("safe-mode-banner"))return; const b=document.createElement("div"); b.id="safe-mode-banner"; b.innerHTML='<div style="display:flex;align-items:center;gap:14px"><span style="font-size:1.3rem">🛡️</span><div><div style="font-weight:700;font-size:.9rem;color:#fff;margin-bottom:3px">Safe Mode Active</div><div style="font-size:.78rem;color:rgba(255,255,255,.55)">System entered safe mode. Some features may be limited.</div></div><button id="smdb" style="margin-left:auto;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:.8rem;font-family:inherit">Dismiss</button></div>'; b.style.cssText="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(12,12,15,.97);border:1px solid rgba(255,214,10,.25);border-left:4px solid #FFD60A;border-radius:18px;padding:18px 22px;z-index:9999998;max-width:540px;width:calc(100% - 48px);backdrop-filter:blur(20px);box-shadow:0 20px 60px rgba(0,0,0,.8);animation:slideUpBanner .45s cubic-bezier(.34,1.56,.64,1) forwards"; document.body.appendChild(b); document.getElementById("smdb")?.addEventListener("click",()=>b.remove()); }catch(e){} },
+    log(err){ try{ this.errorLog.push({t:Date.now(),m:err?.message||String(err)}); if(this.errorLog.length>20)this.errorLog.shift() }catch(e){} }
+};
+window.addEventListener("error",e=>{SafeMode.log(e.error||{message:e.message}); SafeMode.activate("Global: "+e.message)});
+window.addEventListener("unhandledrejection",e=>{SafeMode.log(e.reason); SafeMode.activate("Promise: "+(e.reason?.message||e.reason))});
+
+const AppState = { timers:{master:null}, isLoggingIn:false, isLoggingOut:false, lastProgressSave:null, prevDigits:{day:"",hour:"",min:"",sec:""}, currentPhaseIdx:-1, _masterTick:0, menuOpen:false, notifOpen:false };
+
+const InputValidator = {
+    validateUsername(input){ if(typeof input!=="string")throw new Error("Username must be a string"); const s=input.replace(/[^a-zA-Z0-9\s\-_".]/g,"").trim(); if(s.length<CONFIG.USERNAME_MIN_LENGTH)throw new Error("Username must be at least "+CONFIG.USERNAME_MIN_LENGTH+" characters"); if(s.length>CONFIG.USERNAME_MAX_LENGTH)throw new Error("Username too long"); return s },
+    escapeHTML(str){ if(typeof str!=="string")return""; const d=document.createElement("div"); d.textContent=str; return d.innerHTML },
+    validateSessionData(data){ try{ return this.validateUsername(data) }catch(e){ return null } }
+};
+
+const SafeStorage = {
+    get(key,fb=null){ try{ const i=localStorage.getItem(key); return i?JSON.parse(i):fb }catch(e){ this.remove(key); return fb } },
+    set(key,val){ try{ localStorage.setItem(key,JSON.stringify(val)); return true }catch(e){ if(e.name==="QuotaExceededError"){ this.cleanup(); try{ localStorage.setItem(key,JSON.stringify(val)); return true }catch(r){ return false } } return false } },
+    remove(key){ try{ localStorage.removeItem(key) }catch(e){} },
+    cleanup(){ try{ let s=this.get("cseb_session_history",[]); if(s.length>50){ s=s.slice(0,50); this.set("cseb_session_history",s) } }catch(e){} }
+};
+
+const ToastManager = {
+    _container:null,
+    _getContainer(){ if(!this._container){ this._container=document.createElement("div"); this._container.className="toast-container"; document.body.appendChild(this._container) } return this._container },
+    show(message,type="info",duration=CONFIG.TOAST_DURATION){ const c=this._getContainer(); const t=document.createElement("div"); t.className="toast "+type; const icons={success:"✅",error:"❌",info:"ℹ️",warning:"⚠️"}; t.innerHTML=`<span class="toast-icon">${icons[type]||icons.info}</span><span class="toast-message">${InputValidator.escapeHTML(message)}</span>`; c.appendChild(t); requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add("show"))); setTimeout(()=>{ t.classList.remove("show"); setTimeout(()=>t.remove(),400) },duration) }
+};
+
+const DateUtils = {
+    _cache:"", _cacheDay:-1,
+    getLocalTodayString(){ const d=new Date(),day=d.getDate(); if(day===this._cacheDay&&this._cache)return this._cache; this._cacheDay=day; this._cache=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(day).padStart(2,"0"); return this._cache },
+    getStableDateString(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0") },
+    getYesterdayString(){ const d=new Date(); d.setDate(d.getDate()-1); return this.getStableDateString(d) },
+    formatTime(iso){ if(!iso)return""; return new Date(iso).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}) },
+    formatDate(iso){ if(!iso)return""; return new Date(iso).toLocaleDateString([],{month:"short",day:"numeric"}) }
+};
+
+const ExamTimeState = {
+    _examMs: new Date(CONFIG.EXAM_DATE).getTime(),
+    get(){ const now=Date.now(),gap=this._examMs-now; if(gap>0)return{state:"upcoming",gap,daysLeft:Math.ceil(gap/86400000)}; const el=now-this._examMs; if(el<86400000)return{state:"examday",gap:0,elapsed:el,daysSince:0}; if(el<7*86400000)return{state:"post-exam",gap:0,elapsed:el,daysSince:Math.floor(el/86400000)}; return{state:"post-exam-stale",gap:0,elapsed:el,daysSince:Math.floor(el/86400000)} },
+    isExamOver(){ return Date.now()>=this._examMs }
+};
+
+const PhaseSystem = {
+    getPhaseIndex(){ const now=new Date(),p=CONFIG.PHASES; for(let i=p.length-1;i>=0;i--){ if(now>=new Date(p[i].start))return i } return 0 },
+    getPhaseProgress(idx){ const p=CONFIG.PHASES[idx]; const start=new Date(p.start).getTime(),end=p.end?new Date(p.end).getTime():start+86400000*30; if(end===start)return 1; return Math.min(1,Math.max(0,(Date.now()-start)/(end-start))) },
+    getOverallProgress(idx){ return Math.min(100,((idx+this.getPhaseProgress(idx))/(CONFIG.PHASES.length-1))*100) },
+    renderTimeline(){
+        const container=document.getElementById("phase-track"),fillEl=document.getElementById("phase-progress-fill"),currentTag=document.getElementById("phase-current-tag"),timerPhaseLabel=document.getElementById("timer-phase-label");
+        if(!container)return;
+        const idx=this.getPhaseIndex(); AppState.currentPhaseIdx=idx;
+        const phases=CONFIG.PHASES,frag=document.createDocumentFragment();
+        phases.forEach((p,i)=>{ const sc=i<idx?"done":i===idx?"active":"upcoming"; const item=document.createElement("div"); item.className="phase-item "+sc; item.style.cssText="animation:popInTimeline .45s cubic-bezier(.34,1.56,.64,1) both;animation-delay:"+(i*.08)+"s"; const dot=document.createElement("div"); dot.className="phase-dot "+sc; dot.innerHTML=i<idx?"<span class='dot-check'>✓</span>":"<span class='dot-emoji'>"+p.emoji+"</span>"; const lbl=document.createElement("div"); lbl.className="phase-label"; lbl.textContent=p.label; const dt=document.createElement("div"); dt.className="phase-date"; dt.textContent=new Date(p.start).toLocaleDateString("en-GB",{day:"numeric",month:"short"}); item.append(dot,lbl,dt); frag.appendChild(item) });
+        container.innerHTML=""; container.appendChild(frag);
+        if(fillEl){ fillEl.className="phase-progress-fill "+phases[Math.min(idx,phases.length-1)].fillCls; requestAnimationFrame(()=>setTimeout(()=>{ fillEl.style.width=this.getOverallProgress(idx)+"%" },350)) }
+        if(currentTag)currentTag.textContent="Phase: "+phases[idx].label;
+        if(timerPhaseLabel){ const cls=["phase-prep","phase-revision","phase-final","phase-examday"]; timerPhaseLabel.innerHTML="<div class='phase-indicator'></div>"+phases[idx].emoji+" Phase "+phases[idx].num+" · "+phases[idx].label; timerPhaseLabel.className="timer-phase-label "+(cls[idx]||"phase-prep") }
+    }
+};
+
+const CSEBStats = {
+    STORAGE_KEY:"cseb_jc_v2",
+    PLAN_META:[
+        {day:1, label:"English Basics",       subs:[{tag:"eng",n:8}]},
+        {day:2, label:"English Advanced",     subs:[{tag:"eng",n:7},{tag:"eng",n:9}]},
+        {day:3, label:"General Knowledge I",  subs:[{tag:"gk",n:7}]},
+        {day:4, label:"General Knowledge II", subs:[{tag:"gk",n:8}]},
+        {day:5, label:"Reasoning I",          subs:[{tag:"rsn",n:9}]},
+        {day:6, label:"Reasoning II",         subs:[{tag:"rsn",n:11}]},
+        {day:7, label:"Co-op Law I",          subs:[{tag:"cop",n:9}]},
+        {day:8, label:"Co-op Law II",         subs:[{tag:"cop",n:10}]},
+        {day:9, label:"Co-op Law III",        subs:[{tag:"cop",n:12}]},
+        {day:10,label:"Co-op Law IV",         subs:[{tag:"cop",n:9}]},
+        {day:11,label:"Acts & Rules I",       subs:[{tag:"act",n:8}]},
+        {day:12,label:"Acts & Rules II",      subs:[{tag:"act",n:8},{tag:"act",n:9}]},
+        {day:13,label:"Banking I",            subs:[{tag:"bkg",n:7},{tag:"bkg",n:6}]},
+        {day:14,label:"Banking II",           subs:[{tag:"bkg",n:6},{tag:"bkg",n:8}]},
+        {day:15,label:"Banking III",          subs:[{tag:"bkg",n:10},{tag:"bkg",n:10}]},
+        {day:16,label:"Accounting I",         subs:[{tag:"acc",n:8},{tag:"acc",n:8}]},
+        {day:17,label:"Accounting II",        subs:[{tag:"acc",n:5},{tag:"acc",n:10}]},
+        {day:18,label:"Full Revision",        subs:[{tag:"eng",n:7},{tag:"gk",n:7},{tag:"rsn",n:7}]},
+        {day:19,label:"Co-op + Acts Review",  subs:[{tag:"cop",n:9},{tag:"act",n:10}]},
+        {day:20,label:"Banking Review",       subs:[{tag:"bkg",n:6},{tag:"bkg",n:10}]},
+        {day:21,label:"Final Revision",       subs:[{tag:"acc",n:9},{tag:"rev",n:7}]}
+    ],
+    getState(){ try{ const r=localStorage.getItem(this.STORAGE_KEY); return r?JSON.parse(r):null }catch(e){ return null } },
+    getTodayDayNum(){
+        const today=new Date(); today.setHours(0,0,0,0);
+        const diff=Math.floor((today-_CSEB_START)/86400000)+1;
+        return Math.max(1,Math.min(21,diff));
+    },
+    _getTotalTopicsForDay(dayMeta){ return dayMeta.subs.reduce((a,s)=>a+s.n,0) },
+    _getCheckedByTag(state){
+        const checked=state?(state.checkedTopics||{}):{};
+        const counts={eng:{done:0,total:0},gk:{done:0,total:0},rsn:{done:0,total:0},cop:{done:0,total:0},act:{done:0,total:0},bkg:{done:0,total:0},acc:{done:0,total:0}};
+        this.PLAN_META.forEach(d=>{ const pfx="d"+d.day+"_s"; d.subs.forEach((s,si)=>{ if(!counts[s.tag])return; const sp=pfx+si+"_t"; for(let ti=0;ti<s.n;ti++){ counts[s.tag].total++; if(checked[sp+ti])counts[s.tag].done++ } }) });
+        return counts;
+    },
+    render(){ StudyPlanUI.render(false); NeuralEngine.render() }
+};
+
+const StudyPlanUI = {
+    SUBJECTS:[
+        {tag:"eng", label:"English",    color:"#FF453A", barId:"sbar-eng-bar", pctId:"sbar-eng"},
+        {tag:"gk",  label:"GK",         color:"#30D158", barId:"sbar-gk-bar",  pctId:"sbar-gk"},
+        {tag:"rsn", label:"Reasoning",  color:"#FF6AC1", barId:"sbar-rsn-bar", pctId:"sbar-rsn"},
+        {tag:"cop", label:"Co-op Law",  color:"#BF5AF2", barId:"sbar-cop-bar", pctId:"sbar-cop"},
+        {tag:"act", label:"Acts",       color:"#FF640A", barId:"sbar-act-bar", pctId:"sbar-act"},
+        {tag:"bkg", label:"Banking",    color:"#2997FF", barId:"sbar-bkg-bar", pctId:"sbar-bkg"},
+        {tag:"acc", label:"Accounting", color:"#FFD60A", barId:"sbar-acc-bar", pctId:"sbar-acc"}
+    ],
+    _lastHash: "",
+    render(flash=false){
+        const state = CSEBStats.getState();
+        const tc    = CSEBStats._getCheckedByTag(state);
+        const today = CSEBStats.getTodayDayNum();
+        let td=0,tt=0;
+        Object.values(tc).forEach(c=>{td+=c.done;tt+=c.total});
+        const op = tt>0?Math.round((td/tt)*100):0;
+        const hash = op+"|"+JSON.stringify(Object.values(tc).map(c=>c.done));
+        if(hash===this._lastHash && !flash){ return }
+        this._lastHash = hash;
+        this._setEl("sbar-overall", op+"%", flash);
+        this._setEl("sbar-day", "Day "+today+"/21");
+        const ovEl=document.getElementById("sbar-overall");
+        if(ovEl) ovEl.style.color=op>=80?"#30D158":op>=40?"#2997FF":"#FFD60A";
+        this.SUBJECTS.forEach(s=>{
+            const c=tc[s.tag]||{done:0,total:0};
+            const pct=c.total>0?Math.round((c.done/c.total)*100):0;
+            this._setEl(s.pctId, pct+"%", flash);
+            const bar=document.getElementById(s.barId);
+            if(bar) bar.style.width=pct+"%";
+        });
+        const mins = SessionTracker.getTodayMinutes();
+        let timeStr, timeSub;
+        if(mins<=0){ timeStr="0m"; timeSub="No logs" }
+        else if(mins<60){ timeStr=mins+"m"; timeSub=mins+" min studied" }
+        else{ const h=Math.floor(mins/60),m=mins%60; timeStr=h+"h"+(m>0?" "+m+"m":""); timeSub=timeStr+" studied" }
+        this._setEl("sbar-time", timeStr);
+        this._setEl("sbar-time-sub", timeSub);
+        this._setEl("sp-day-badge", "Day "+today+" / 21");
+        this._renderDayGrid(state, today);
+    },
+    _setEl(id, val, flash=false){
+        const el=document.getElementById(id);
+        if(!el||el.textContent===val)return;
+        el.textContent=val;
+        if(flash){ el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash"); setTimeout(()=>el.classList.remove("flash"),600) }
+    },
+    _renderDayGrid(state, today){
+        const el=document.getElementById("sp-day-grid"); if(!el)return;
+        const checked=state?(state.checkedTopics||{}):{};
+        el.innerHTML=CSEBStats.PLAN_META.map(d=>{
+            const pfx="d"+d.day+"_s"; let dd=0,dt=0;
+            d.subs.forEach((s,si)=>{ const sp=pfx+si+"_t"; for(let ti=0;ti<s.n;ti++){ dt++; if(checked[sp+ti])dd++ } });
+            const pct=dt>0?Math.round((dd/dt)*100):0;
+            const isPast=d.day<today, isToday=d.day===today;
+            const primaryTag=d.subs[0]?.tag||"eng";
+            const subj=this.SUBJECTS.find(s=>s.tag===primaryTag)||this.SUBJECTS[0];
+            const fillColor=isToday?subj.color:isPast?"#30D158":"rgba(255,255,255,.18)";
+            const cls=isToday?"today":isPast?"past":"future";
+            return `<div class="sp-day-card ${cls}">
+                <div class="sp-day-num">Day ${d.day}</div>
+                <div class="sp-day-title">${d.label}</div>
+                <div class="sp-day-topics">
+                    <span class="sp-day-topics-count">${dd}/${dt}</span>
+                    <div class="sp-day-mini-bar"><div class="sp-day-mini-fill" style="width:${pct}%;background:${fillColor}"></div></div>
+                </div>
+                ${isPast&&dd===dt?`<div class="sp-day-past-check">✅</div>`:""}
+                ${isPast&&dd<dt?`<div class="sp-day-past-check" style="opacity:.35">⚠️</div>`:""}
+            </div>`;
+        }).join("");
+    }
+};
+
+const ActiveSync = {
+    _interval: null,
+    _syncCircle: null,
+    _lastSyncTs: 0,
+    init(){
+        this._syncCircle = document.getElementById("sp-sync-circle");
+        window.addEventListener("storage", e => {
+            if(!sessionStorage.getItem("csebUser"))return;
+            const relevant = e.key === CSEBStats.STORAGE_KEY || e.key?.startsWith("STATS_");
+            if(relevant) this._triggerSync("cross-tab");
+        });
+        this._interval = setInterval(()=>this._triggerSync("periodic"), 30000);
+        this._triggerSync("init");
+    },
+    _triggerSync(source){
+        const now = Date.now();
+        if(source!=="init" && now-this._lastSyncTs < 1200) return;
+        this._lastSyncTs = now;
+        if(this._syncCircle){
+            this._syncCircle.classList.add("syncing");
+            setTimeout(()=>this._syncCircle?.classList.remove("syncing"), 700);
+        }
+        StudyPlanUI.render(source==="cross-tab" || source==="periodic");
+        NeuralEngine.render();
+        ExamCountdownPanel.renderStatic();
+        if(source==="cross-tab"){
+            ToastManager.show("📊 Study data synced in real-time","info",2000);
+        }
+    },
+    stop(){ if(this._interval){ clearInterval(this._interval); this._interval=null } }
+};
+
+const NeuralEngine = {
+    _SUBJECT_MAP:{eng:"English",gk:"Gen. Knowledge",rsn:"Reasoning",cop:"Co-op Law",act:"Acts & Rules",bkg:"Banking",acc:"Accounting"},
+    _SUBJECT_COLORS:{eng:"#FF453A",gk:"#30D158",rsn:"#FF6AC1",cop:"#BF5AF2",act:"#FF640A",bkg:"#2997FF",acc:"#FFD60A"},
+    _getActiveDays(){
+        const days=[];
+        try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k&&k.startsWith("STATS_")){ const d=SafeStorage.get(k,{totalSeconds:0}); if(d.totalSeconds>120)days.push({date:k.replace("STATS_",""),seconds:d.totalSeconds}) } } }catch(e){}
+        return days;
+    },
+    analyze(){
+        const activeDays=this._getActiveDays();
+        const totalSecs=activeDays.reduce((a,d)=>a+d.seconds,0);
+        const avgHrs=activeDays.length>0?(totalSecs/3600/activeDays.length):0;
+        const cs=CSEBStats.getState(),tc=CSEBStats._getCheckedByTag(cs);
+        let done=0,total=0;
+        const subMap=this._SUBJECT_MAP;
+        let weakest={tag:"none",label:"None",pct:100},strongest={tag:"none",label:"None",pct:0};
+        const subjectsArr=[];
+        Object.entries(tc).forEach(([tag,c])=>{
+            done+=c.done; total+=c.total;
+            const pct=c.total>0?(c.done/c.total*100):0;
+            subjectsArr.push({tag,label:subMap[tag]||tag,pct,done:c.done,total:c.total});
+            if(pct<weakest.pct&&c.total>0)weakest={tag,label:subMap[tag]||tag,pct};
+            if(pct>=strongest.pct&&c.total>0)strongest={tag,label:subMap[tag]||tag,pct};
+        });
+        const overallPct=total>0?(done/total*100):0;
+        const start=new Date("2026-03-01T00:00:00").getTime();
+        let daysElapsed=Math.max(1,Math.floor((Date.now()-start)/86400000)+1); daysElapsed=Math.min(21,daysElapsed);
+        const expectedPct=(daysElapsed/21)*100;
+        let ers=expectedPct>0?Math.round((overallPct/expectedPct)*100):0;
+        if(avgHrs>3)ers=Math.min(100,ers+7); else if(avgHrs<1)ers=Math.max(0,ers-12);
+        ers=Math.min(100,Math.max(0,ers));
+        let velTier,velColor;
+        if(avgHrs>=3){velTier="🔥 On Fire";velColor="#30D158"}
+        else if(avgHrs>=2){velTier="✅ Solid";velColor="#2997FF"}
+        else if(avgHrs>=1){velTier="⚠️ Steady";velColor="#FFD60A"}
+        else{velTier="🐢 Slow";velColor="#FF453A"}
+        const velBarPct=Math.min(100,Math.round((avgHrs/4)*100));
+        let insight="",ersStatus="",ersColor="#30D158",insightConf="High";
+        if(activeDays.length<2){
+            ersStatus="Needs Data";ersColor="#2997FF";ers=0;insightConf="Low";
+            insight="Not enough data. <span class='insight-highlight'>Log at least 2 study sessions</span> on the Study Plan page for the Neural Engine to activate.";
+        } else if(total===done&&total>0){
+            ers=100;ersStatus="Exam Ready";ersColor="#30D158";insightConf="Very High";
+            insight="Full syllabus completed. <span class='insight-highlight'>Run full mock tests</span> daily to maintain peak retention through exam day.";
+        } else if(ers>=90){
+            ersStatus="Optimal Pace";ersColor="#30D158";insightConf="High";
+            if(weakest.pct<40)insight=`Velocity excellent. But <span class='insight-highlight'>${weakest.label}</span> is at ${Math.round(weakest.pct)}% — needs immediate attention.`;
+            else insight=`Pace is optimal — you're ahead of schedule by ${Math.round(ers-100)}%. Keep it consistent and review ${weakest.label}.`;
+        } else if(ers>=70){
+            ersStatus="Slightly Behind";ersColor="#FFD60A";insightConf="Medium";
+            insight=`You're trailing by ~${Math.round(100-ers)}%. Prioritize <span class='insight-highlight'>${weakest.label}</span> in your next session to close the gap.`;
+        } else if(ers>=50){
+            ersStatus="Behind";ersColor="#FF640A";insightConf="Medium";
+            const req=Math.ceil((total-done)/Math.max(1,21-daysElapsed));
+            insight=`Significant gap detected. Target <span class='insight-highlight'>${req} topics/day</span> minimum. Focus heavily on ${weakest.label} and ${subjectsArr.sort((a,b)=>a.pct-b.pct)[1]?.label||"Banking"}.`;
+        } else {
+            ersStatus="Critical Risk";ersColor="#FF453A";insightConf="High";
+            const req=Math.ceil((total-done)/Math.max(1,21-daysElapsed));
+            insight=`⚠️ High non-completion risk. You must complete <span class='insight-highlight'>${req} topics/day</span>. Abandon non-essential activities and fully focus on ${weakest.label}.`;
+        }
+        return{avgHrs,velBarPct,velTier,velColor,done,total,ers,ersStatus,ersColor,insight,insightConf,hasData:activeDays.length>0,daysElapsed,subjectsArr,weakest};
+    },
+    render(){
+        const grid=document.getElementById("intelligence-grid");
+        if(!grid)return;
+        const data=this.analyze();
+        if(!data||!data.hasData){ grid.style.display="none"; return }
+        grid.style.display="grid";
+        const hrsStr=data.avgHrs>=1?data.avgHrs.toFixed(1):Math.round(data.avgHrs*60);
+        const hrsLabel=data.avgHrs>=1?"h/d":"m/d";
+        const velEl=document.getElementById("vel-hrs");
+        if(velEl) velEl.innerHTML=`${hrsStr}<span style="font-size:.8rem;color:rgba(255,255,255,.4);margin-left:2px">${hrsLabel}</span>`;
+        const velTopics=document.getElementById("vel-topics");
+        if(velTopics) velTopics.textContent=`${data.done}/${data.total} topics · ${Math.round((data.done/Math.max(1,data.total))*100)}%`;
+        const velBar=document.getElementById("vel-bar");
+        if(velBar){velBar.style.width=data.velBarPct+"%";velBar.style.background=data.velColor}
+        const velPill=document.getElementById("vel-pill");
+        if(velPill){velPill.textContent=data.velTier;velPill.style.color=data.velColor;velPill.style.background=data.velColor+"18";velPill.style.borderColor=data.velColor+"35"}
+        const ncVel=document.getElementById("nc-velocity");
+        if(ncVel) ncVel.style.borderColor=data.velColor+"35";
+        const c=2*Math.PI*22;
+        const ring=document.getElementById("ers-ring");
+        if(ring){ring.style.strokeDasharray=c;ring.style.strokeDashoffset=c-(c*data.ers/100);ring.style.stroke=data.ersColor}
+        const ersVal=document.getElementById("ers-val"); if(ersVal) ersVal.textContent=data.ers;
+        const ersSt=document.getElementById("ers-status"); if(ersSt){ersSt.textContent=data.ersStatus;ersSt.style.color=data.ersColor}
+        const ersDay=document.getElementById("ers-day"); if(ersDay) ersDay.textContent=data.daysElapsed;
+        const ersPill=document.getElementById("ers-pill");
+        if(ersPill){ersPill.style.background=data.ersColor+"15";ersPill.style.color=data.ersColor;ersPill.style.borderColor=data.ersColor+"30"}
+        const ncRead=document.getElementById("nc-readiness"); if(ncRead) ncRead.style.borderColor=data.ersColor+"35";
+        const focusWeakest=document.getElementById("focus-weakest");
+        if(focusWeakest) focusWeakest.textContent=data.weakest.label||"—";
+        const focusTag=document.getElementById("focus-tag");
+        const weakPct=Math.round(data.weakest.pct);
+        if(focusTag){
+            const tagColor=weakPct<30?"#FF453A":weakPct<60?"#FF640A":"#FFD60A";
+            focusTag.textContent=weakPct<30?"Critical":weakPct<60?"Needs Work":"Fair";
+            focusTag.style.background=tagColor+"15";focusTag.style.color=tagColor;focusTag.style.borderColor=tagColor+"30";
+        }
+        const focusBars=document.getElementById("focus-bars");
+        if(focusBars){
+            const sorted=[...data.subjectsArr].sort((a,b)=>a.pct-b.pct).slice(0,3);
+            focusBars.innerHTML=sorted.map(s=>{
+                const col=this._SUBJECT_COLORS[s.tag]||"#fff";
+                return `<div class="nc-focus-row">
+                    <div class="nc-focus-label">${s.label}</div>
+                    <div class="nc-focus-bar"><div class="nc-focus-fill" style="width:${Math.round(s.pct)}%;background:${col}"></div></div>
+                    <div class="nc-focus-pct" style="color:${col}">${Math.round(s.pct)}%</div>
+                </div>`;
+            }).join("");
+        }
+        const niEl=document.getElementById("neural-insight");
+        if(niEl) niEl.innerHTML=data.insight;
+        const confEl=document.getElementById("insight-conf");
+        if(confEl) confEl.textContent=data.insightConf+" Confidence";
+        requestAnimationFrame(()=>setTimeout(()=>grid.classList.add("show"),500));
+    }
+};
+
+/* ══════════════════════════════════════════════════════
+   FIX APPLIED HERE: Added closing }, for _render()
+   before _clRows so it becomes a proper object method.
+   ══════════════════════════════════════════════════════ */
+const UpdateManager = {
+    openModal(){ document.getElementById("updateModalOverlay")?.classList.add("show"); document.body.style.overflow="hidden"; this._render() },
+    closeModal(){ document.getElementById("updateModalOverlay")?.classList.remove("show"); document.body.style.overflow="" },
+    _render(){
+        const icon=document.getElementById("umIcon"),title=document.getElementById("umTitle"),sub=document.getElementById("umSubtitle"),body=document.getElementById("umBody");
+        if(!body)return;
+        if(icon){icon.textContent="✦";icon.className="um-icon"}
+        if(title)title.textContent="OS 27 Beta is Live";
+        if(sub)sub.textContent="CSEB Portal · OS 27 · v"+UPDATE_CONFIG.CURRENT_VERSION;
+        body.innerHTML=`<div class="um-ver-pill uptodate"><span class="um-ver-pill-icon">✦</span><div class="um-ver-pill-info"><span class="um-ver-pill-ver">OS 27 · v${UPDATE_CONFIG.CURRENT_VERSION}</span><span class="um-ver-pill-build">Build ${UPDATE_CONFIG.CURRENT_BUILD} · Released ${UPDATE_CONFIG.RELEASE_DATE}</span></div><span class="um-ver-badge">Beta Live ✦</span></div>${UPDATE_CONFIG.BETA.SHOW&&UPDATE_CONFIG.BETA.DESCRIPTION?`<div class="um-section-label">Beta Notes</div><div class="um-beta-note">${UPDATE_CONFIG.BETA.DESCRIPTION}</div>`:""}<div class="um-section-label">OS 27 Changelog</div><div class="um-changelog">${this._clRows(UPDATE_CONFIG.CHANGELOG)}</div><div class="um-actions"><button class="um-btn um-btn-secondary" id="umCloseBtn">Done</button></div><div class="um-build-info">OS 27 · v${UPDATE_CONFIG.CURRENT_VERSION} · Build ${UPDATE_CONFIG.CURRENT_BUILD}</div>`;
+        document.getElementById("umCloseBtn")?.addEventListener("click",()=>this.closeModal());
+    },  /* ← THIS CLOSING BRACE WAS MISSING IN THE ORIGINAL — ROOT CAUSE OF LOGIN BUG */
+    _clRows(items){ return (items||[]).map(i=>`<div class="um-cl-item"><div class="um-cl-dot ${i.type||"blue"}"></div><span>${InputValidator.escapeHTML(i.text)}</span></div>`).join("") }
+};
+
+const ClockUI = {
+    _el:null,_iconEl:null,_last:"",_lastH:-1,
+    init(){ this._el=document.getElementById("clock-display"); this._iconEl=document.getElementById("clock-emoji"); this.update() },
+    update(){ if(!this._el)return; const now=new Date(),h24=now.getHours(),m=String(now.getMinutes()).padStart(2,"0"); const ampm=h24>=12?"PM":"AM",h12=h24%12||12; const str=h12+":"+m+" "+ampm; if(str!==this._last){ this._last=str; Perf.scheduleDOMWrite(()=>{ this._el.textContent=str }) } if(h12!==this._lastH){ this._lastH=h12; Perf.scheduleDOMWrite(()=>{ if(this._iconEl)this._iconEl.textContent=String.fromCodePoint(128335+h12) }) } }
+};
+
+const ExamTimer = {
+    _examMs:new Date(CONFIG.EXAM_DATE).getTime(),_startMs:new Date(CONFIG.STUDY_START).getTime(),_totalSpan:0,
+    _card:null,_bar:null,_els:null,_examLabelEl:null,_phaseLabelEl:null,
+    _keys:["day","hour","min","sec"],_lastBarPct:-1,_appliedState:null,
+    init(){ this._totalSpan=this._examMs-this._startMs; this._card=document.querySelector(".timer-card"); this._bar=document.getElementById("timer-progress-bar"); this._examLabelEl=this._card?.querySelector(".timer-exam-label"); this._phaseLabelEl=document.getElementById("timer-phase-label"); this._els=this._keys.map(id=>document.getElementById(id)) },
+    _applyCardMode(mode){
+        if(this._appliedState===mode)return; this._appliedState=mode;
+        if(!this._card)return;
+        this._card.classList.remove("urgent","examday-mode","post-exam-mode");
+        if(mode==="urgent") this._card.classList.add("urgent");
+        else if(mode==="examday"){ this._card.classList.add("examday-mode"); if(this._examLabelEl)this._examLabelEl.textContent="Exam Day — Best of Luck! 🎯" }
+        else if(mode==="post-exam"){ this._card.classList.add("post-exam-mode"); if(this._examLabelEl)this._examLabelEl.textContent="Exam Complete ✓" }
+    },
+    update(){
+        const ts=ExamTimeState.get();
+        if(ts.state!=="upcoming"){
+            Perf.scheduleDOMWrite(()=>{ this._keys.forEach((k,i)=>{ if(this._els[i]&&AppState.prevDigits[k]!=="00"){ AppState.prevDigits[k]="00"; this._els[i].textContent="00" } }); if(this._lastBarPct!==100){ this._lastBarPct=100; if(this._bar)this._bar.style.width="100%" }; this._applyCardMode(ts.state==="examday"?"examday":"post-exam") });
+            return;
+        }
+        const {gap}=ts;
+        const d=_pad2(Math.floor(gap/86400000)),h=_pad2(Math.floor((gap%86400000)/3600000)),m=_pad2(Math.floor((gap%3600000)/60000)),s=_pad2(Math.floor((gap%60000)/1000));
+        const vals=[d,h,m,s],isUrgent=gap<=(48*3600000),pct=Math.round(Math.min(100,Math.max(0,((Date.now()-this._startMs)/this._totalSpan)*100))*100)/100;
+        Perf.scheduleDOMWrite(()=>{
+            vals.forEach((v,i)=>{ const key=this._keys[i]; if(AppState.prevDigits[key]!==v){ AppState.prevDigits[key]=v; const el=this._els[i]; if(el){ el.classList.add("update-out"); setTimeout(()=>{ el.textContent=v; el.classList.remove("update-out") },100) } } });
+            this._applyCardMode(isUrgent?"urgent":"upcoming");
+            if(pct!==this._lastBarPct){ this._lastBarPct=pct; if(this._bar)this._bar.style.width=pct.toFixed(2)+"%" }
+        });
+    }
+};
+
+const SessionTracker = {
+    init(){ if(!sessionStorage.getItem("cseb_session_start"))sessionStorage.setItem("cseb_session_start",Date.now()); AppState.lastProgressSave=Date.now() },
+    saveProgress(){ if(!sessionStorage.getItem("csebUser"))return; const now=Date.now(); const secs=Math.min(Math.max(0,Math.floor((now-(AppState.lastProgressSave||now))/1000)),CONFIG.MAX_DELTA_SECONDS); if(secs<=0)return; const key="STATS_"+DateUtils.getLocalTodayString(); const data=SafeStorage.get(key,{totalSeconds:0,logins:0}); data.totalSeconds+=secs; if(SafeStorage.set(key,data))AppState.lastProgressSave=now },
+    incrementDailyLoginCount(){ const key="STATS_"+DateUtils.getLocalTodayString(); const d=SafeStorage.get(key,{totalSeconds:0,logins:0}); d.logins++; SafeStorage.set(key,d) },
+    getTodayMinutes(){ const d=SafeStorage.get("STATS_"+DateUtils.getLocalTodayString(),{totalSeconds:0}); return Math.floor(d.totalSeconds/60) },
+    logLogin(){ const today=DateUtils.getLocalTodayString(); let sessions=SafeStorage.get("cseb_session_history",[]).map(s=>{ if(s.endTime===null&&DateUtils.getStableDateString(new Date(s.startTime))!==today)return{...s,endTime:new Date().toISOString()}; return s }); const ns={id:"SES-"+Math.random().toString(36).substr(2,6).toUpperCase(),startTime:new Date().toISOString(),endTime:null,platform:"Web OS"}; sessions.unshift(ns); if(sessions.length>CONFIG.SESSION_HISTORY_LIMIT)sessions=sessions.slice(0,CONFIG.SESSION_HISTORY_LIMIT); SafeStorage.set("cseb_session_history",sessions); sessionStorage.setItem("cseb_current_session_id",ns.id) },
+    logLogout(){ if(AppState.isLoggingOut)return; AppState.isLoggingOut=true; const id=sessionStorage.getItem("cseb_current_session_id"); if(!id){AppState.isLoggingOut=false;return} const sessions=SafeStorage.get("cseb_session_history",[]); const idx=sessions.findIndex(s=>s.id===id); if(idx!==-1&&!sessions[idx].endTime){ sessions[idx].endTime=new Date().toISOString(); SafeStorage.set("cseb_session_history",sessions) } sessionStorage.removeItem("cseb_current_session_id"); AppState.isLoggingOut=false }
+};
+
+const ExamCountdownPanel = {
+    _examMs:new Date(CONFIG.EXAM_DATE).getTime(),_startMs:new Date(CONFIG.STUDY_START).getTime(),_els:{},_initialized:false,
+    init(){
+        if(this._initialized){this.renderStatic();return} this._initialized=true;
+        ["day","hour","min","sec","bar","phase","planDay","daysLeftRow","badge"].forEach(k=>{
+            const ids={day:"emc-day",hour:"emc-hour",min:"emc-min",sec:"emc-sec",bar:"emc-bar",phase:"emc-phase",planDay:"emc-plan-day",daysLeftRow:"emc-days-left-row",badge:"exam-cd-badge"};
+            this._els[k]=document.getElementById(ids[k])
+        });
+        this.renderStatic();
+    },
+    tickUpdate(){
+        const ts=ExamTimeState.get();
+        if(!this._els.day)return;
+        if(ts.state==="upcoming"){ const{gap}=ts; this._els.day.textContent=_pad2(Math.floor(gap/86400000)); this._els.hour.textContent=_pad2(Math.floor((gap%86400000)/3600000)); this._els.min.textContent=_pad2(Math.floor((gap%3600000)/60000)); this._els.sec.textContent=_pad2(Math.floor((gap%60000)/1000)); const pct=Math.min(100,Math.max(0,(Date.now()-this._startMs)/(this._examMs-this._startMs))*100); if(this._els.bar)this._els.bar.style.width=pct.toFixed(2)+"%"; if(this._els.badge)this._els.badge.textContent=ts.daysLeft+(ts.daysLeft===1?" day":" days") }
+        else{ ["day","hour","min","sec"].forEach(k=>{if(this._els[k])this._els[k].textContent="00"}); if(this._els.bar)this._els.bar.style.width="100%"; if(this._els.badge){ if(ts.state==="examday")this._els.badge.textContent="Today! 🎯"; else this._els.badge.textContent="Complete ✓" } }
+    },
+    renderStatic(){
+        const phaseIdx=AppState.currentPhaseIdx>=0?AppState.currentPhaseIdx:PhaseSystem.getPhaseIndex();
+        const phaseNames=["Preparation","Revision","Exam Day"],phaseColors=["green","purple","orange"];
+        if(this._els.phase){this._els.phase.textContent=phaseNames[phaseIdx]||"—"; this._els.phase.className="status-row-val "+(phaseColors[phaseIdx]||"green")}
+        if(this._els.planDay)this._els.planDay.textContent="Day "+CSEBStats.getTodayDayNum()+" of 21";
+        if(this._els.daysLeftRow){ const ts=ExamTimeState.get(); if(ts.state==="upcoming"){ const dc=ts.daysLeft<=2?"red":ts.daysLeft<=7?"orange":"blue"; this._els.daysLeftRow.textContent=ts.daysLeft+" days"; this._els.daysLeftRow.className="status-row-val "+dc } else if(ts.state==="examday"){ this._els.daysLeftRow.textContent="Exam Day! 🎯"; this._els.daysLeftRow.className="status-row-val gold" } else{ this._els.daysLeftRow.textContent=ts.daysSince===0?"Today":ts.daysSince+"d ago"; this._els.daysLeftRow.className="status-row-val green" } }
+    }
+};
+
+const StreakManager = {
+    init(){ this._handleMonthChange(); this._handleOnceRestore(); this._update(); this._updateUI() },
+    _today(){ return DateUtils.getLocalTodayString() },
+    _month(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0") },
+    _handleMonthChange(){ const m=this._month(),sm=SafeStorage.get("streak_restore_month",null); if(sm!==m){ SafeStorage.set("streak_restore_credits",5); SafeStorage.set("streak_restore_month",m) } },
+    _handleOnceRestore(){ if(SafeStorage.get("streak_force_restored_v2051",false))return; const today=this._today(),last=SafeStorage.get("last_active_date",null),streak=SafeStorage.get("streak_count",0); if(streak<3&&last!==today){ SafeStorage.set("streak_count",7); SafeStorage.set("last_active_date",today); SafeStorage.set("streak_force_restored_v2051",true) } },
+    _update(){ const today=this._today(),yest=DateUtils.getYesterdayString(),last=SafeStorage.get("last_active_date",null); if(last===today)return; let streak=SafeStorage.get("streak_count",0); streak=(last===yest)?streak+1:1; const best=Math.max(SafeStorage.get("streak_best",0),streak); SafeStorage.set("streak_count",streak); SafeStorage.set("last_active_date",today); SafeStorage.set("streak_best",best) },
+    _canRestore(){ return SafeStorage.get("last_active_date",null)===DateUtils.getYesterdayString()&&SafeStorage.get("streak_restore_credits",5)>0 },
+    _restore(){ if(!this._canRestore())return false; let streak=SafeStorage.get("streak_count",0),credits=SafeStorage.get("streak_restore_credits",5); SafeStorage.set("streak_count",++streak); SafeStorage.set("last_active_date",this._today()); SafeStorage.set("streak_restore_credits",--credits); this._updateUI(); ToastManager.show("Streak restored! "+credits+" credits left this month.","success"); return true },
+    restorePublic(){ this._restore() },
+    _updateUI(){ const streak=SafeStorage.get("streak_count",0),credits=SafeStorage.get("streak_restore_credits",5); const badge=document.getElementById("home-streak-badge"),btn=document.getElementById("streak-restore-btn"); if(badge){ badge.textContent="⚡ "+streak+" Day Streak"; badge.classList.add("visible","ui-badge") } if(btn){ if(this._canRestore()){ btn.style.display="inline-flex"; btn.textContent="⚡ Restore Streak ("+credits+" left)" } else btn.style.display="none" } }
+};
+
+const SpecialDays = {
+    days:{"1-26":"Republic Day","2-4":"World Cancer Day","2-28":"National Science Day","3-8":"International Women's Day","3-22":"World Water Day","4-7":"World Health Day","4-14":"Vishu / Ambedkar Jayanti","4-22":"Earth Day","6-5":"World Environment Day","8-15":"Independence Day","10-2":"Gandhi Jayanti","11-1":"Kerala Piravi","11-14":"Children's Day"},
+    check(){ const now=new Date(),key=(now.getMonth()+1)+"-"+now.getDate(),badge=document.getElementById("special-badge"); if(!badge)return; badge.textContent=this.days[key]?"✦ Today is "+this.days[key]:"◈ "+now.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}); badge.classList.add("visible") }
+};
+
+const NotifManager = {
+    STORAGE_KEY:"cseb_notifications",_FIRED_KEY:"cseb_notif_auto_fired",
+    _hasFired(key){ return!!(SafeStorage.get(this._FIRED_KEY,{})[key]) },
+    _markFired(key){ const obj=SafeStorage.get(this._FIRED_KEY,{}); obj[key]=true; SafeStorage.set(this._FIRED_KEY,obj) },
+    load(){ return SafeStorage.get(this.STORAGE_KEY,[]) },
+    save(notifs){ SafeStorage.set(this.STORAGE_KEY,notifs.slice(0,80)) },
+    add(title,desc,type="info",icon="🔔",id=null){ const notifs=this.load(); if(id&&notifs.find(n=>n.id===id))return false; const n={id:id||("N-"+Math.random().toString(36).substr(2,8).toUpperCase()),title,desc,type,icon,time:new Date().toISOString(),read:false}; notifs.unshift(n); this.save(notifs); this.render(); this._shakeBell(); return true },
+    markRead(id){ const notifs=this.load(),n=notifs.find(n=>n.id===id); if(n&&!n.read){ n.read=true; this.save(notifs); this.render() } },
+    markAllRead(){ this.save(this.load().map(n=>({...n,read:true}))); this.render() },
+    clear(){ this.save([]); this.render() },
+    getUnreadCount(){ return this.load().filter(n=>!n.read).length },
+    _shakeBell(){ const bell=document.getElementById("notifBell"); if(!bell)return; bell.classList.remove("has-unread"); requestAnimationFrame(()=>requestAnimationFrame(()=>bell.classList.add("has-unread"))) },
+    render(){
+        const list=document.getElementById("notifList"),badge=document.getElementById("notifBadge"),countEl=document.getElementById("notifUnreadCount"),footerEl=document.getElementById("notifFooter"),bellBtn=document.getElementById("notifBell");
+        if(!list)return;
+        const notifs=this.load(),unread=this.getUnreadCount();
+        if(badge){ badge.textContent=unread>9?"9+":unread; badge.classList.toggle("visible",unread>0) }
+        if(countEl){ countEl.textContent=unread; countEl.style.display=unread>0?"":"none" }
+        if(bellBtn)bellBtn.classList.toggle("has-unread",unread>0);
+        if(!notifs.length){ list.innerHTML=`<div class="notif-empty"><div>🔕</div><div>No notifications</div></div>`; if(footerEl)footerEl.textContent="CSEB Portal · Notifications"; return }
+        const typeIcons={info:"ℹ️",warning:"⚠️",alert:"🚨",success:"✅"};
+        const frag=document.createDocumentFragment();
+        notifs.forEach(n=>{ const item=document.createElement("div"); item.className="notif-item"+(n.read?"":" unread"); item.dataset.id=n.id; item.dataset.type=n.type; const timeStr=this._formatNotifTime(n.time); item.innerHTML=`<div class="notif-icon-wrap">${n.icon||typeIcons[n.type]||"🔔"}</div><div class="notif-body"><div class="notif-title">${InputValidator.escapeHTML(n.title)}</div><div class="notif-desc">${InputValidator.escapeHTML(n.desc)}</div><div class="notif-time">${timeStr}</div></div>${!n.read?`<button class="notif-mark-read-btn" title="Mark as read">✓</button>`:""}`; frag.appendChild(item) });
+        list.innerHTML=""; list.appendChild(frag);
+        if(footerEl){ const total=notifs.length; footerEl.textContent=`${total} notification${total!==1?"s":""} · ${unread} unread` }
+    },
+    _formatNotifTime(iso){ if(!iso)return""; const d=new Date(iso),now=new Date(),diff=now-d; if(diff<60000)return"Just now"; if(diff<3600000)return Math.floor(diff/60000)+"m ago"; if(diff<86400000)return Math.floor(diff/3600000)+"h ago"; return d.toLocaleDateString([],{month:"short",day:"numeric"}) },
+    toggle(){ const panel=document.getElementById("notifPanel"),bell=document.getElementById("notifBell"); if(!panel)return; const isOpen=panel.classList.contains("show"); panel.classList.toggle("show",!isOpen); bell?.classList.toggle("active",!isOpen); AppState.notifOpen=!isOpen; if(!isOpen){ document.getElementById("profileMenu")?.classList.remove("show"); document.getElementById("profileBtn")?.classList.remove("active"); AppState.menuOpen=false; this.render() } },
+    closePanel(){ document.getElementById("notifPanel")?.classList.remove("show"); document.getElementById("notifBell")?.classList.remove("active"); AppState.notifOpen=false },
+    checkAutoNotifications(){
+        const now=Date.now(),ts=ExamTimeState.get(),today=DateUtils.getLocalTodayString(),hour=new Date().getHours();
+        if(ts.state==="post-exam"&&ts.daysSince===1){ const k="postexam_congrats_"+today; if(!this._hasFired(k)){ this._markFired(k); this.add("🎉 You did it!","Jr. Clerk exam is over! Take a day off — results coming soon.","success","🎉","auto-postexam-"+today) } }
+        if(ExamTimeState.isExamOver())return;
+        if(ts.state==="upcoming"&&ts.daysLeft===3){ const k3="3day_"+today; if(!this._hasFired(k3)){ this._markFired(k3); this.add("⏳ 3 Days to Exam!","Final revision mode — you've got this!","alert","⏳","auto-3day-"+today) } }
+        if(ts.state==="upcoming"&&ts.daysLeft===7){ const k7="admitcard_7_"+today; if(!this._hasFired(k7)){ this._markFired(k7); this.add("🪪 Admit Card Reminder","Exam is in 7 days! Download your admit card from CSEB website now.","warning","🪪","auto-admitcard7-"+today) } }
+        if(ts.state==="upcoming"&&ts.daysLeft===1){ const kf="final_checklist_"+today; if(!this._hasFired(kf)){ this._markFired(kf); this.add("📋 Tomorrow is Exam Day!","Pack tonight: ✅ Admit Card ✅ Valid Photo ID ✅ Black ballpoint pen. Exam at 2:00 PM. Sleep early!","alert","📋","auto-finalcheck-"+today) } }
+        if(ts.state==="examday"){ const ke="examday_"+today; if(!this._hasFired(ke)){ this._markFired(ke); this.add("🎯 Exam Day!","Today is your exam — Jr. Clerk (Super Grade). Report by 1:30 PM. All the best!","alert","🎯","auto-examday-"+today) } }
+        const morningKey="morning_nudge_"+today;
+        if(hour>=7&&hour<10&&!this._hasFired(morningKey)){ this._markFired(morningKey); const dayNum=CSEBStats.getTodayDayNum(); const dm=CSEBStats.PLAN_META.find(d=>d.day===dayNum); this.add("🌅 Good Morning!","Day "+dayNum+"/21 of your plan. Today's focus: "+(dm?dm.label:"Revision")+". Best studying happens now!","info","🌅","auto-morning-"+today) }
+        const studyKey="nostudy_"+today;
+        if(hour>=21&&!this._hasFired(studyKey)){ const mins=SessionTracker.getTodayMinutes(); if(mins<15){ this._markFired(studyKey); this.add("📚 Study Reminder","No study logged today yet. Even 20 minutes before bed significantly helps retention!","warning","📚","auto-nostudy-"+today) } }
+        try{
+            const cs=CSEBStats.getState(),tc=CSEBStats._getCheckedByTag(cs);
+            let _td=0,_tt=0; Object.values(tc).forEach(c=>{_td+=c.done;_tt+=c.total});
+            const op=_tt>0?Math.round((_td/_tt)*100):0;
+            if(op>=50&&!this._hasFired("halfway_milestone")){ this._markFired("halfway_milestone"); this.add("🏆 Halfway Milestone!","You've completed "+op+"% of all study plan topics. Excellent progress!","success","🏆","auto-halfway") }
+            if(op>=80&&!this._hasFired("eighty_milestone")){ this._markFired("eighty_milestone"); this.add("🌟 80% Complete!",op+"% of topics done! You're in the top preparation bracket.","success","🌟","auto-eighty") }
+        }catch(_e){}
+    }
+};
+
+const ProfileUI = {
+    update(username){ const d=document.getElementById("displayUser"),a=document.getElementById("userAvatar"); if(d)d.textContent=username; if(a)a.textContent=username.charAt(0); this.updateActivity() },
+    updateActivity(){
+        const el=document.getElementById("activity-list"); if(!el)return;
+        const today=DateUtils.getLocalTodayString();
+        const sessions=SafeStorage.get("cseb_session_history",[]).filter(s=>DateUtils.getStableDateString(new Date(s.startTime))===today);
+        const parts=sessions.slice(0,10).map(s=>`<div class="history-item"><div class="h-date"><span>${InputValidator.escapeHTML(DateUtils.formatDate(s.startTime))}</span><span class="h-id">${InputValidator.escapeHTML(s.id)}</span></div><div class="h-time">${InputValidator.escapeHTML(s.platform||"Web OS")} · Login: ${DateUtils.formatTime(s.startTime)}${s.endTime?" · Logout: "+DateUtils.formatTime(s.endTime):" · <span style='color:var(--neon-green);font-weight:600'>Active</span>"}</div></div>`);
+        el.innerHTML=parts.length?parts.join(""):`<div class="activity-empty">No sessions yet today</div>`;
+        const ce=document.getElementById("activity-count"); if(ce)ce.textContent=sessions.length>0?sessions.length+(sessions.length===1?" session":" sessions"):"Today"
+    }
+};
+
+const ExperimentsManager = {
+    EXPERIMENTS:[
+        {id:"amoled_mode",     name:"AMOLED Dark Theme",       emoji:"🌑", enabled:false},
+        {id:"streak_protect",  name:"Streak Shield Auto-Save",  emoji:"🛡️", enabled:false},
+        {id:"safe_fallback",   name:"Safe Fallback Mode",       emoji:"🔒", enabled:true, locked:true}
+    ],
+    init(){
+        const saved=SafeStorage.get("os26_experiments",{});
+        this.EXPERIMENTS.forEach(e=>{ if(saved[e.id]!==undefined&&!e.locked)e.enabled=saved[e.id]; if(e.enabled&&!e.locked)this._applyEffect(e,true) });
+        this.renderDropdown(); this.updateDropCount();
+    },
+    toggle(id,event){ if(event){event.stopPropagation();event.preventDefault()} const exp=this.EXPERIMENTS.find(e=>e.id===id); if(!exp)return; if(exp.locked){ToastManager.show("Safe Fallback Mode is always active.","info");return} exp.enabled=!exp.enabled; const saved=SafeStorage.get("os26_experiments",{}); saved[id]=exp.enabled; SafeStorage.set("os26_experiments",saved); this._applyEffect(exp,exp.enabled); const dt=document.getElementById("exp-drop-toggle-"+id); if(dt)dt.classList.toggle("on",exp.enabled); this.updateDropCount(); ToastManager.show(exp.enabled?exp.name+" enabled.":exp.name+" disabled.",exp.enabled?"success":"info") },
+    _applyEffect(exp,on){ if(exp.id==="amoled_mode")document.body.classList.toggle("amoled",on) },
+    updateDropCount(){ const on=this.EXPERIMENTS.filter(e=>e.enabled).length; const el=document.getElementById("exp-drop-count"); if(el)el.textContent=on>0?on+" on":"0 on" },
+    renderDropdown(){
+        const grid=document.getElementById("exp-drop-grid"); if(!grid)return;
+        grid.innerHTML=this.EXPERIMENTS.map(e=>{ const isLocked=!!e.locked; const tc="exp-drop-toggle"+(e.enabled?" on":"")+(isLocked?" locked-on":""); const lo=isLocked?"<span class='exp-always-on'>Always On</span>":""; return`<div class="exp-drop-row" data-exp-id="${e.id}"><div class="exp-drop-row-left"><span class="exp-drop-emoji">${e.emoji}</span><div class="exp-drop-name-block"><span class="exp-drop-name">${InputValidator.escapeHTML(e.name)}</span>${lo}</div></div><div class="${tc}" id="exp-drop-toggle-${e.id}"><div class="exp-drop-toggle-knob"></div></div></div>` }).join("")
+    }
+};
+
+const TimerManager = {
+    start(){
+        this.stop(); ClockUI.init(); ExamTimer.init(); AppState._masterTick=0;
+        if(typeof window._stopPreLoginClock==="function"){ window._stopPreLoginClock(); window._stopPreLoginClock=null }
+        AppState.timers.master=setInterval(()=>{
+            AppState._masterTick++;
+            ClockUI.update(); ExamTimer.update(); ExamCountdownPanel.tickUpdate();
+            if(AppState._masterTick%60===0){ SessionTracker.saveProgress(); NotifManager.checkAutoNotifications() }
+            if(AppState._masterTick%300===0){ ProfileUI.updateActivity() }
+            if(AppState._masterTick%1800===0){ AppState._masterTick=0 }
+        },1000);
+    },
+    stop(){ if(AppState.timers.master){ clearInterval(AppState.timers.master); AppState.timers.master=null } },
+    pause(){ this.stop() },
+    resume(){ this.start() }
+};
+
+const VisibilityManager = { init(){ document.addEventListener("visibilitychange",()=>{ if(document.hidden)TimerManager.pause(); else{ TimerManager.resume(); ClockUI.update(); ExamTimer.update() } }) } };
+
+const CrossTabSync = {
+    init(){
+        window.addEventListener("storage",e=>{
+            if(e.key==="cseb_global_logout"){ sessionStorage.clear(); location.reload(); return }
+        })
+    }
+};
+
+const SectionReveal = {
+    init(){ const obs=new IntersectionObserver(entries=>{ entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("revealed"); obs.unobserve(e.target) } }) },{threshold:.06,rootMargin:"0px 0px -60px 0px"}); document.querySelectorAll(".section-reveal").forEach((el,i)=>{ el.style.transitionDelay=(i*.06)+"s"; obs.observe(el) }) }
+};
+
+const ThemeManager = { init(){ const exp=SafeStorage.get("os26_experiments",{}); if(exp["amoled_mode"])document.body.classList.add("amoled") } };
+
+const ParallaxManager = {
+    _orb1:null,_orb2:null,_enabled:true,
+    init(){ this._orb1=document.querySelector(".orb-1"); this._orb2=document.querySelector(".orb-2"); const handler=Perf.throttle(e=>{ if(!this._enabled||!this._orb1)return; requestAnimationFrame(()=>{ const x=(e.clientX/window.innerWidth-.5)*16,y=(e.clientY/window.innerHeight-.5)*16; if(this._orb1)this._orb1.style.transform="translate3d("+x+"px,"+y+"px,0)"; if(this._orb2)this._orb2.style.transform="translate3d("+(-x)+"px,"+(-y)+"px,0)" }) },40); document.addEventListener("mousemove",handler,{passive:true}); document.addEventListener("visibilitychange",()=>{this._enabled=!document.hidden}) }
+};
+
+const Auth = {
+    attemptLogin(){
+        if(AppState.isLoggingIn)return;
+        const nameInput=document.getElementById("nameInput"),passInput=document.getElementById("passInput"),loginBtn=document.getElementById("loginBtn");
+        let validatedName;
+        try{ validatedName=InputValidator.validateUsername(nameInput.value) }
+        catch(e){ nameInput.classList.add("error"); ToastManager.show(e.message,"error"); setTimeout(()=>nameInput.classList.remove("error"),2000); return }
+        if(!passInput.value){ passInput.classList.add("error"); ToastManager.show("Please enter your password","error"); setTimeout(()=>passInput.classList.remove("error"),2000); return }
+        AppState.isLoggingIn=true;
+        if(loginBtn){ loginBtn.disabled=true; loginBtn.textContent="Verifying…" }
+        let encoded;
+        try{ const bytes=new TextEncoder().encode(passInput.value); let bin=""; bytes.forEach(b=>{ bin+=String.fromCharCode(b) }); encoded=btoa(bin) }
+        catch(e){ this._failLogin(passInput,loginBtn); return }
+        if(validatedName.toLowerCase()==="abhishek"&&encoded===CONFIG.ENCODED_PASS){ this._successLogin(validatedName) }
+        else{ this._failLogin(passInput,loginBtn) }
+    },
+    _successLogin(name){
+        const fullName="Abhishek S",token=Math.random().toString(36).substring(2)+Date.now().toString(36);
+        sessionStorage.setItem("csebUser",fullName); sessionStorage.setItem("cseb_session_token",token); sessionStorage.setItem("cseb_session_start",Date.now());
+        SessionTracker.logLogin(); SessionTracker.incrementDailyLoginCount(); SessionTracker.init();
+        ProfileUI.update(fullName); StreakManager.init(); ThemeManager.init();
+        const overlay=document.getElementById("welcome-overlay"),loginCard=document.querySelector(".login-card"),greetingEl=document.getElementById("greetingText"),app=document.getElementById("main-app");
+        overlay.classList.add("loading-state");
+        loginCard.style.cssText="filter:blur(16px);transform:translateY(-35%) scale(.92);opacity:0";
+        setTimeout(()=>{
+            loginCard.style.display="none";
+            const msg=this._greeting(name);
+            greetingEl.textContent=msg;
+            document.getElementById("dynamic-greeting").textContent=msg;
+            greetingEl.classList.remove("exit"); greetingEl.classList.add("enter");
+        },500);
+        setTimeout(()=>{
+            greetingEl.classList.remove("enter"); greetingEl.classList.add("exit");
+            overlay.style.opacity="0";
+            setTimeout(()=>{
+                overlay.style.visibility="hidden";
+                app.style.display="block";
+                requestAnimationFrame(()=>{
+                    Perf.safeExec(()=>{
+                        app.style.opacity="1"; app.style.transform="translateY(0)";
+                        SpecialDays.check(); TimerManager.start(); ExperimentsManager.init();
+                        PhaseSystem.renderTimeline(); ExamCountdownPanel.init();
+                        NotifManager.add("👋 Welcome back!","Good to see you, Abhishek. Today is Day "+CSEBStats.getTodayDayNum()+" of your study plan.","success","👋","welcome-"+DateUtils.getLocalTodayString());
+                        CrossTabSync.init(); NotifManager.checkAutoNotifications(); NotifManager.render();
+                        requestAnimationFrame(()=>{ CSEBStats.render(); ActiveSync.init(); SectionReveal.init() });
+                    },"app-boot");
+                });
+                ScrollFix.unlock(); AppState.isLoggingIn=false;
+            },750);
+        },3200);
+    },
+    _failLogin(passInput,loginBtn){
+        const loginCard=document.querySelector(".login-card");
+        loginCard.style.transform="translateX(10px)"; setTimeout(()=>loginCard.style.transform="translateX(-10px)",100); setTimeout(()=>loginCard.style.transform="",200);
+        ToastManager.show("Invalid credentials. Please try again.","error");
+        passInput.value=""; passInput.classList.add("error");
+        setTimeout(()=>{ passInput.classList.remove("error"); if(loginBtn){ loginBtn.disabled=false; loginBtn.textContent="Enter Portal" } AppState.isLoggingIn=false },2000);
+    },
+    checkLoginStatus(){
+        const savedUser=sessionStorage.getItem("csebUser"),token=sessionStorage.getItem("cseb_session_token");
+        if(savedUser&&token){
+            const user=InputValidator.validateSessionData(savedUser);
+            if(!user){ sessionStorage.clear(); location.reload(); return }
+            Perf.safeExec(()=>{
+                StreakManager.init(); SessionTracker.init(); ThemeManager.init();
+                document.getElementById("welcome-overlay").style.display="none";
+                const app=document.getElementById("main-app"),fn=user.split(" ")[0];
+                document.getElementById("dynamic-greeting").textContent=this._greeting(fn);
+                app.style.display="block"; SpecialDays.check(); app.style.opacity="1"; app.style.transform="translateY(0)";
+                ProfileUI.update(user); ScrollFix.unlock(); TimerManager.start();
+                ExperimentsManager.init(); PhaseSystem.renderTimeline(); ExamCountdownPanel.init();
+                NotifManager.checkAutoNotifications(); NotifManager.render(); CrossTabSync.init();
+                requestAnimationFrame(()=>{ CSEBStats.render(); ActiveSync.init(); SectionReveal.init() });
+            },"checkLoginStatus-boot");
+        } else {
+            const o=document.getElementById("welcome-overlay");
+            o.style.cssText="display:flex;visibility:visible;opacity:1";
+        }
+    },
+    logout(){
+        if(AppState.isLoggingOut)return;
+        SessionTracker.saveProgress(); SessionTracker.logLogout(); TimerManager.stop(); ActiveSync.stop();
+        const app=document.getElementById("main-app"),overlay=document.getElementById("welcome-overlay"),greetingEl=document.getElementById("greetingText"),loginCard=document.querySelector(".login-card");
+        app.style.display="none"; loginCard.style.display="none";
+        overlay.style.cssText="display:flex;visibility:visible;opacity:1;background:#000;backdrop-filter:none;z-index:1000000";
+        const fn=(sessionStorage.getItem("csebUser")||"User").split(" ")[0];
+        greetingEl.classList.remove("exit","enter"); void greetingEl.offsetWidth;
+        greetingEl.textContent="See You Soon, "+fn; setTimeout(()=>greetingEl.classList.add("enter"),50);
+        setTimeout(()=>{ greetingEl.classList.remove("enter"); greetingEl.classList.add("exit"); setTimeout(()=>{ ["csebUser","cseb_session_token","cseb_session_start"].forEach(k=>sessionStorage.removeItem(k)); AppState.isLoggingOut=false; localStorage.setItem("cseb_global_logout",Date.now().toString()); location.reload() },700) },2500);
+    },
+    _greeting(name){ const n=name.charAt(0).toUpperCase()+name.slice(1).toLowerCase(),h=new Date().getHours(); const g=h>=5&&h<12?"Good Morning":h>=12&&h<17?"Good Afternoon":h>=17&&h<21?"Good Evening":"Welcome"; return g+", "+n }
+};
+
+const EventBindings = {
+    init(){
+        document.getElementById("loginBtn")?.addEventListener("click",()=>Auth.attemptLogin());
+        document.getElementById("passInput")?.addEventListener("keypress",e=>{ if(e.key==="Enter")Auth.attemptLogin() });
+        document.getElementById("nameInput")?.addEventListener("keypress",e=>{ if(e.key==="Enter")document.getElementById("passInput")?.focus() });
+
+        document.getElementById("profileBtn")?.addEventListener("click",e=>{ e.stopPropagation(); NotifManager.closePanel(); const menu=document.getElementById("profileMenu"),btn=document.getElementById("profileBtn"); const isOpen=menu?.classList.contains("show"); menu?.classList.toggle("show",!isOpen); btn?.classList.toggle("active",!isOpen); AppState.menuOpen=!isOpen; if(!isOpen){ ProfileUI.updateActivity() } });
+
+        document.getElementById("notifBell")?.addEventListener("click",e=>{ if(e.target.closest("#notifPanel"))return; e.stopPropagation(); document.getElementById("profileMenu")?.classList.remove("show"); document.getElementById("profileBtn")?.classList.remove("active"); AppState.menuOpen=false; NotifManager.toggle() });
+        document.getElementById("notifPanel")?.addEventListener("click",e=>e.stopPropagation());
+        document.getElementById("notifMarkAllBtn")?.addEventListener("click",e=>{ e.stopPropagation(); NotifManager.markAllRead() });
+        document.getElementById("notifClearBtn")?.addEventListener("click",e=>{ e.stopPropagation(); NotifManager.clear() });
+        document.getElementById("notifList")?.addEventListener("click",e=>{ e.stopPropagation(); const markBtn=e.target.closest(".notif-mark-read-btn"),item=e.target.closest(".notif-item"); if(markBtn&&item){ e.preventDefault(); NotifManager.markRead(item.dataset.id); return } if(item)NotifManager.markRead(item.dataset.id) });
+
+        document.getElementById("profileMenu")?.addEventListener("click",e=>{ e.stopPropagation();
+            const toggle=e.target.closest(".dd-expand-toggle"),menuItem=e.target.closest(".menu-item"),expRow=e.target.closest(".exp-drop-row");
+            if(expRow){ const expId=expRow.dataset.expId; if(expId){ ExperimentsManager.toggle(expId,e); return } }
+            if(toggle){ const panelId=toggle.dataset.panel+"-panel"; const panel=document.getElementById(panelId); if(!panel)return; const isOpen=panel.classList.contains("open"); ["exam-cd-panel","activity-panel","exp-drop-panel"].forEach(id=>{ if(id!==panelId){ document.getElementById(id)?.classList.remove("open"); document.querySelector(`[data-panel="${id.replace("-panel","")}"]`)?.classList.remove("open") } }); panel.classList.toggle("open",!isOpen); toggle.classList.toggle("open",!isOpen); if(!isOpen){ if(panelId==="activity-panel")ProfileUI.updateActivity(); if(panelId==="exam-cd-panel")ExamCountdownPanel.renderStatic() } return }
+            if(menuItem){ const action=menuItem.dataset.action,url=menuItem.dataset.url; if(action==="open"&&url){ window.open(url,"_blank","noreferrer,noopener"); return } if(action==="logout"){ Auth.logout(); return } if(action==="checkUpdate"){ document.getElementById("profileMenu")?.classList.remove("show"); document.getElementById("profileBtn")?.classList.remove("active"); AppState.menuOpen=false; UpdateManager.openModal(); return } }
+        });
+
+        document.getElementById("appsGrid")?.addEventListener("click",e=>{ const card=e.target.closest(".app-card"); if(card){ const url=card.dataset.url; if(url)window.open(url,"_blank","noreferrer,noopener") } });
+        document.getElementById("streak-restore-btn")?.addEventListener("click",()=>StreakManager.restorePublic());
+
+        document.addEventListener("click",e=>{ const widget=document.getElementById("profileWidget"); if(widget&&!widget.contains(e.target)){ document.getElementById("profileMenu")?.classList.remove("show"); document.getElementById("profileBtn")?.classList.remove("active"); AppState.menuOpen=false; NotifManager.closePanel() } });
+        document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ document.getElementById("profileMenu")?.classList.remove("show"); document.getElementById("profileBtn")?.classList.remove("active"); AppState.menuOpen=false; NotifManager.closePanel(); UpdateManager.closeModal() } });
+        document.getElementById("updateModalOverlay")?.addEventListener("click",e=>{ if(e.target===document.getElementById("updateModalOverlay"))UpdateManager.closeModal() });
+        document.getElementById("umCloseIconBtn")?.addEventListener("click",()=>UpdateManager.closeModal());
+    }
+};
+
+window.addEventListener("DOMContentLoaded",()=>{
+    Perf.safeExec(()=>{
+        const _clockEl=document.getElementById("clock-display"),_iconEl=document.getElementById("clock-emoji");
+        let _lastH=-1;
+        const _tick=()=>{ const now=new Date(),h24=now.getHours(),m=String(now.getMinutes()).padStart(2,"0"); const ampm=h24>=12?"PM":"AM",h12=h24%12||12; if(_clockEl)_clockEl.textContent=h12+":"+m+" "+ampm; if(_iconEl&&h12!==_lastH){ _lastH=h12; _iconEl.textContent=String.fromCodePoint(128335+h12) } };
+        _tick();
+        const preLoginClock=setInterval(_tick,1000);
+        window._stopPreLoginClock=()=>clearInterval(preLoginClock);
+
+        const badge=document.getElementById("updateMenuBadge");
+        if(badge){ badge.className="menu-item-update-badge available"; badge.textContent="v3.1 Beta" }
+
+        EventBindings.init();
+        ParallaxManager.init();
+        VisibilityManager.init();
+        Auth.checkLoginStatus();
+
+        window.addEventListener("beforeunload",()=>{ if(!AppState.isLoggingOut){ SessionTracker.saveProgress(); SessionTracker.logLogout(); TimerManager.stop() } });
+    },"DOMContentLoaded-init");
+});
+</script>
+
+    <!-- Update Modal -->
+    <div class="update-modal-overlay" id="updateModalOverlay">
+        <div class="update-modal">
+            <div class="um-beta-banner">
+                <div class="um-beta-icon">✦</div>
+                <div class="um-beta-body">
+                    <span class="um-beta-title">OS 27 Beta — v3.1 Now Live</span>
+                    <span class="um-beta-desc">Neural Engine v2, Active Sync, Subject Focus Card &amp; more.</span>
+                </div>
+                <span class="um-beta-chip">Beta Live ✦</span>
+            </div>
+            <div class="um-header">
+                <div class="um-icon" id="umIcon">✅</div>
+                <div class="um-title-block">
+                    <div class="um-title" id="umTitle">Software is Up to Date</div>
+                    <div class="um-subtitle" id="umSubtitle">CSEB Portal · OS 27 Beta · v3.1</div>
+                </div>
+                <div class="um-close" id="umCloseIconBtn" title="Close">✕</div>
+            </div>
+            <div class="um-body" id="umBody">
+                <div style="text-align:center;padding:28px 10px;font-family:'Inter',sans-serif;color:rgba(255,255,255,.3);font-size:.82rem">Loading…</div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
