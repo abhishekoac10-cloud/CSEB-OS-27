@@ -1,4 +1,4 @@
-# 🎯 CSEB Web OS 27 | 
+# 🎯 CSEB Web OS 27 
 
 ![Version](https://img.shields.io/badge/Version-3.1_Beta-blue?style=for-the-badge)
 ![Tech Stack](https://img.shields.io/badge/Tech-Pure_HTML/CSS/JS-orange?style=for-the-badge)
